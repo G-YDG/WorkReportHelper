@@ -7,12 +7,15 @@ import { renderAll } from '../main'
 export function openSet() {
   const c = state.db.cfg
   $('s-url').value = c.url || ''
-  $('s-key').value = '' // 不回显，占位提示「已保存（留空保持不变）」
-  $('s-model').value = c.model || ''
-  $('s-time').value = c.time || '18:30'
-  $('s-dir').value = c.dir || ''
+  // Key 有保存记忆时用 ●●● 占位显示（点眼睛解密看实际值）；无记忆为空
+  const hasKey = !!c.keyEnc
+  $('s-key').value = hasKey ? '●●●●●●●●●●●●' : ''
+  $('s-key').placeholder = hasKey ? '点击 👁 查看已保存的 Key' : 'sk-…（留空保持已保存的 Key）'
+  $('s-key').type = 'password' // 每次打开重置为隐藏态
+  $('s-key-eye').querySelector('.eye-on').style.display = ''
+  $('s-key-eye').querySelector('.eye-off').style.display = 'none'
+  $('s-model').value = c.model || 'deepseek-v4.1-flash' // 模型名默认值
   $('s-data').value = c.dataPath || '%APPDATA%\\WorkReportHelper'
-  $('s-auto').classList.toggle('on', !!c.auto)
   $('s-boot').classList.toggle('on', !!c.boot)
   $('s-testmsg').textContent = ''
   $('ovl-set').classList.add('show')
@@ -20,11 +23,40 @@ export function openSet() {
 
 export function bindSettings() {
   $('btn-settings').onclick = openSet
-  $('s-auto').onclick = () => $('s-auto').classList.toggle('on')
   $('s-boot').onclick = () => $('s-boot').classList.toggle('on')
+  // API Key 显示/隐藏切换（默认隐藏）：
+  // 显示时若输入框为空且已有保存的 Key → 解密回显实际 Key；
+  // 隐藏时若值仍是解密回显的旧 Key（未被编辑）→ 恢复 ●●● 占位
+  const KEY_MASK = '●●●●●●●●●●●●'
+  let echoedKey = '' // 当前解密回显的 Key，用于区分「回显值」与「用户新输入」
+  $('s-key-eye').onclick = async () => {
+    const inp = $('s-key')
+    const show = inp.type === 'password'
+    if (show) {
+      // 占位（●●● 或空）且有保存的 Key → 解密回显实际 Key
+      if ((!inp.value || inp.value === KEY_MASK) && state.db.cfg.keyEnc) {
+        try {
+          inp.value = await window.api.store.decryptKey(state.db.cfg.keyEnc)
+          echoedKey = inp.value
+        } catch (e) {
+          toast('Key 解密失败：' + (e.message || e), 'err')
+        }
+      }
+      inp.type = 'text'
+    } else {
+      if (echoedKey && inp.value === echoedKey) inp.value = KEY_MASK // 未编辑的回显值，隐藏时恢复占位
+      echoedKey = ''
+      inp.type = 'password'
+    }
+    $('s-key-eye').querySelector('.eye-on').style.display = show ? 'none' : ''
+    $('s-key-eye').querySelector('.eye-off').style.display = show ? '' : 'none'
+  }
   $('s-test').onclick = async () => {
     const msg = $('s-testmsg')
-    const url = $('s-url').value.trim(), key = $('s-key').value.trim()
+    const url = $('s-url').value.trim()
+    let key = $('s-key').value.trim()
+    // 占位状态下用已保存的 Key 测试
+    if (key === KEY_MASK) key = state.db.cfg.keyEnc ? await window.api.store.decryptKey(state.db.cfg.keyEnc) : ''
     if (!/^https?:\/\//.test(url)) { msg.textContent = '接口地址需以 http(s):// 开头'; msg.className = 'testmsg err'; return }
     if (!key) { msg.textContent = '请填写 API Key'; msg.className = 'testmsg err'; return }
     msg.textContent = '测试中…'; msg.className = 'testmsg'
@@ -40,12 +72,12 @@ export function bindSettings() {
     c.url = $('s-url').value.trim()
     c.model = $('s-model').value.trim()
     const key = $('s-key').value.trim()
-    if (key) c.keyEnc = await window.api.store.encryptKey(key)
-    c.time = $('s-time').value || '18:30'
-    c.dir = $('s-dir').value.trim()
+    // ●●● 占位（未查看/未修改）不算新输入，保留旧 keyEnc；空 = 清除 Key
+    if (key && key !== KEY_MASK) c.keyEnc = await window.api.store.encryptKey(key)
+    if (!key && !c.keyEnc) c.keyEnc = ''
     c.dataPath = $('s-data').value.trim() || '%APPDATA%\\WorkReportHelper'
     const bootChanged = !!c.boot !== $('s-boot').classList.contains('on')
-    c.auto = $('s-auto').classList.contains('on')
+    c.auto = false // 定时生成模块已移除
     c.boot = $('s-boot').classList.contains('on')
     persist()
     if (bootChanged) await window.api.app.setBoot(c.boot)

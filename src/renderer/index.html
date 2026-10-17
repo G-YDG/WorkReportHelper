@@ -216,22 +216,25 @@
       <div class="mbody" style="grid-template-columns:1fr;display:flex;flex-direction:column;gap:16px">
         <div class="field"><label>接口地址（OpenAI 兼容）</label><input id="s-url" placeholder="https://api.example.com/v1/chat/completions"></div>
         <div class="row2">
-          <div class="field"><label>API Key</label><input id="s-key" type="password" placeholder="sk-…（留空保持已保存的 Key）"></div>
+          <div class="field"><label>API Key</label>
+            <div class="key-wrap">
+              <input id="s-key" type="password" placeholder="sk-…（未保存时填写）">
+              <button id="s-key-eye" type="button" tabindex="-1" title="显示 / 隐藏">
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="eye-on"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="eye-off" style="display:none"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/><path d="M4 4l16 16"/></svg>
+              </button>
+            </div>
+          </div>
           <div class="field"><label>模型名</label><input id="s-model" placeholder="如 deepseek-chat"></div>
         </div>
         <div style="display:flex;gap:8px;align-items:center">
           <button class="btn" id="s-test">测试连接</button><span class="testmsg" id="s-testmsg"></span>
         </div>
         <div class="gline"></div>
-        <div class="field"><label>数据保存路径（本地数据库，v1 固定）</label><input id="s-data" value="%APPDATA%\WorkReportHelper" disabled title="v1 固定：%APPDATA%\WorkReportHelper"></div>
-        <div class="toggle"><span class="sw" id="s-auto"></span>每天定时自动生成并通知</div>
-        <div class="row2">
-          <div class="field"><label>定时时间</label><input id="s-time" type="time" value="18:30"></div>
-          <div class="field"><label>报告导出目录</label><input id="s-dir" placeholder="默认与数据保存路径一致"></div>
-        </div>
+        <div class="field"><label>数据保存路径</label><input id="s-data" value="%APPDATA%\WorkReportHelper" disabled title="v1 固定：%APPDATA%\WorkReportHelper"></div>
         <div class="gline"></div>
         <div>
-          <div class="hkrow"><span>唤起 / 隐藏窗口</span><kbd id="s-hk1">Ctrl+Alt+E</kbd></div>
+          <div class="hkrow"><span>唤起 / 隐藏窗口</span><kbd id="s-hk1">Alt+E</kbd></div>
           <p class="tip">真实程序中点击即可重录热键</p>
         </div>
         <div class="toggle"><span class="sw" id="s-boot"></span>开机自启</div>

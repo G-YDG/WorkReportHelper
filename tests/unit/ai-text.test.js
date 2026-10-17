@@ -91,3 +91,13 @@ describe('类别块间距', () => {
     expect(out).toContain('- feat(app): 功能 A\n\n**问题修复**')
   })
 })
+
+describe('项目间距', () => {
+  it('不同项目之间空一行（与类别块分隔拉开一档）', () => {
+    const out = localReport('daily', [
+      { d: '2026-10-16', t: '09:00', x: 'feat(app): 项目A功能', done: true, r: 'alpha' },
+      { d: '2026-10-16', t: '10:00', x: 'feat: 项目B功能', done: true, r: 'beta' }
+    ])
+    expect(out).toContain('- feat(app): 项目A功能\n\n\n#### beta')
+  })
+})
