@@ -32,9 +32,6 @@ export function renderAll() {
   $('v-title').textContent = VT[state.view]
   $('v-sub').textContent = VS[state.view]
   RENDER[state.view]()
-  document.getElementById('cnt-frags').textContent = state.db.frags.length
-  document.getElementById('cnt-reps').textContent = state.db.reports.length
-  document.getElementById('cnt-repos').textContent = state.db.cfg.repos.length
 }
 
 initState()

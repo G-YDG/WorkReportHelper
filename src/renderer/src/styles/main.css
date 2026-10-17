@@ -1,6 +1,6 @@
 /* src/renderer/src/styles/main.css — 迁移自 docs/原型.html:12-217
    修改点：① 新增 #titlebar 标题栏 ② 删除 .taskbar/.tray/.scene/.desk 假桌面规则
-   ③ .win 全屏化（无边框窗口直接铺满） ④ 新增 #scan-dir / .tb-left / #ovl-edit 辅助样式 */
+   ③ .win 全屏化（无边框窗口直接铺满） ④ 新增 .tb-left / #ovl-edit 辅助样式 */
 :root{
   --bg:#101216; --ink:#14171d; --card:#1b1f27; --card2:#20252e;
   --stroke:rgba(255,255,255,.07); --stroke2:rgba(255,255,255,.12);
@@ -23,7 +23,6 @@ kbd{display:inline-block;padding:1px 7px;border:1px solid var(--stroke2);border-
 #titlebar button{-webkit-app-region:no-drag;border:none;background:none;color:var(--text3);
   cursor:pointer;font-size:16px;padding:0 8px}
 #titlebar button:hover{color:var(--danger)}
-.badge{min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--ac);color:#10131a;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;font-variant-numeric:tabular-nums}
 /* window（无边框窗口全屏化） */
 .win{width:100%;height:100%;background:linear-gradient(180deg,rgba(226,232,246,.045),transparent 120px),var(--ink);display:flex;overflow:hidden}
 /* nav */
@@ -36,7 +35,7 @@ kbd{display:inline-block;padding:1px 7px;border:1px solid var(--stroke2);border-
 .nav button svg{width:16px;height:16px;stroke:currentColor;flex:none}
 .nav button:hover{color:var(--text);background:rgba(255,255,255,.04)}
 .nav button.on{color:var(--text);background:var(--ac-soft);border-color:rgba(138,160,230,.28)}
-.nav .nvcount{margin-left:auto;font-size:11px;color:var(--text3);font-variant-numeric:tabular-nums}
+
 /* main */
 .main{flex:1;display:flex;flex-direction:column;min-width:0}
 .top{display:flex;align-items:center;gap:12px;padding:14px 20px;border-bottom:1px solid var(--stroke)}
@@ -51,7 +50,7 @@ kbd{display:inline-block;padding:1px 7px;border:1px solid var(--stroke2);border-
 .btn.sm{padding:5px 10px;font-size:12px;border-radius:8px}
 .btn.danger:hover{border-color:var(--danger);color:var(--danger)}
 /* views */
-.view{display:none;flex:1;overflow:auto;padding:18px 20px}
+.view{display:none;flex:1;overflow:auto;padding:18px 20px 28px}
 .view.on{display:block}
 .view::-webkit-scrollbar{width:8px}
 .view::-webkit-scrollbar-thumb{background:#333a46;border-radius:4px}
@@ -150,11 +149,9 @@ kbd{display:inline-block;padding:1px 7px;border:1px solid var(--stroke2);border-
 .toolbar{display:flex;gap:10px;align-items:center;margin-bottom:14px;flex-wrap:wrap}
 #fq{flex:1;min-width:180px;padding:9px 13px;border-radius:10px;border:1px solid var(--stroke2);background:var(--ink);outline:none}
 #fq:focus{border-color:var(--ac)}
-#scan-dir{flex:0 1 260px;min-width:170px;padding:9px 13px;border-radius:10px;border:1px solid var(--stroke2);background:var(--ink);outline:none}
-#scan-dir:focus{border-color:var(--ac)}
-#scan-dir::placeholder{color:var(--text3)}
 .stats{color:var(--text3);font-size:12.5px;font-variant-numeric:tabular-nums;margin-left:auto}
 /* reports mgmt */
+/* 工作碎片/报告管理右侧详情：列表限高可滚，操作条固定在其下不随内容跑远 */
 .repwrap{display:grid;grid-template-columns:240px 1fr;gap:14px;min-height:420px}
 .replist{display:flex;flex-direction:column;gap:6px;max-height:460px;overflow:auto}
 .repitem{text-align:left;padding:11px 12px;border-radius:10px;border:1px solid var(--stroke);background:var(--card);cursor:pointer}
@@ -164,9 +161,11 @@ kbd{display:inline-block;padding:1px 7px;border:1px solid var(--stroke2);border-
 .repitem span{display:block;margin-top:3px;color:var(--text3);font-size:11.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .repitem .tag{font-size:10.5px;color:var(--ac);border:1px solid rgba(138,160,230,.35);padding:0 6px;border-radius:6px;margin-left:6px;vertical-align:1px}
 .repdetail{display:flex;flex-direction:column;gap:12px}
+/* 详情列内部：碎片/提交列表占满剩余高度并自滚，repfoot 操作条贴其下、不随内容无限增长 */
+.repdetail > .card{flex:1;min-height:0;overflow:auto;max-height:460px}
+.repfoot{display:flex;gap:8px;align-items:center;flex-wrap:wrap;flex:none}
 #rep-text{flex:1;min-height:330px;resize:none;padding:16px;border-radius:var(--r);border:1px solid var(--stroke2);background:var(--ink);line-height:1.75;outline:none;font-size:13.5px;white-space:pre-wrap}
 #rep-text:focus{border-color:var(--ac)}
-.repfoot{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .repfoot .btn{flex:none}
 .repfoot .when{color:var(--text3);font-size:12px;font-variant-numeric:tabular-nums;text-align:left}
 /* segment control */

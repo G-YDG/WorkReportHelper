@@ -50,8 +50,9 @@ export function renderRepos() {
 }
 
 // 扫描结果弹窗：fresh 可勾选（默认全选），已知仓库禁用并标注「已存在」
+let lastScanDir = '' // 记住上次扫描目录，作为下次选择框的起点
 function renderScanResult(freshCount) {
-  $('scan-path').textContent = $('scan-dir').value.trim().replace(/[\\/]+$/, '')
+  $('scan-path').textContent = lastScanDir.replace(/[\\/]+$/, '')
   if (!scanRes.length) {
     $('scan-sum').textContent = '发现 0 个 Git 仓库'
     $('scan-list').innerHTML = '<div class="empty">该目录下未发现 Git 仓库<br>会遍历子目录检测 .git，最多向下 3 层</div>'
@@ -96,9 +97,9 @@ export function bindRepos() {
   }
   $('repo-scan').onclick = async () => {
     if (scanning) return
-    const dir = await window.api.app.pickDir($('scan-dir').value.trim() || undefined)
+    const dir = await window.api.app.pickDir(lastScanDir || undefined)
     if (!dir) return
-    $('scan-dir').value = dir
+    lastScanDir = dir
     scanning = true
     $('scan-sum').textContent = '扫描中…'
     $('scan-list').innerHTML = ''

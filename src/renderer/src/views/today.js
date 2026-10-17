@@ -44,14 +44,12 @@ function addQuick(done) {
 
 export function renderToday() {
   const d = keyOf(new Date()), list = fragOfDay(d), dn = list.filter((f) => f.done).length
-  $('today-count').textContent = list.length + ' 条'
   $('ov-stat').innerHTML = list.length + '<small>条碎片 · ' + dn + ' 已完成</small>'
   $('ov-last').textContent = list.length ? list[list.length - 1].t : '—'
   $('ov-rep').textContent = state.db.reports.some((r) => r.type === 'daily' && r.d === d) ? '已生成' : '未生成'
   const box = $('today-frags')
   box.innerHTML = list.length ? list.map(fragRow).join('') : '<div class="empty">还没有记录，敲一行回车保存</div>'
   bindFragRows(box)
-  $('badge').textContent = list.length
 }
 
 export function bindToday() {

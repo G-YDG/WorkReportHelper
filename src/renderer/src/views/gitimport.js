@@ -36,7 +36,7 @@ function renderGit() {
   }))
   if (!collected || collected.date !== src) {
     $('commit-list').innerHTML =
-      '<div class="empty">选择提交日期后点「收集提交日志」<br>将从各启用仓库拉取该日期的提交</div>'
+      '<div class="empty">选择提交日期后点「查询提交日志」<br>将从各启用仓库拉取该日期的提交</div>'
     $('git-stats').textContent = ''
     $('git-import').disabled = true
     $('git-import').textContent = '导入'
