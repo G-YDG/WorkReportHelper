@@ -23,7 +23,28 @@ export function renderFrags() {
           '<span class="tag">' + fragOfDay(k).length + ' 条</span></b><span>' + (last ? esc(last.x) : '（空）') + '</span></button>'
       }).join('')
     : '<div class="empty">还没有任何碎片</div>'
-  $('frag-days').querySelectorAll('.repitem').forEach((b) => (b.onclick = () => { state.selDay = b.dataset.d; renderFrags() }))
+  $('frag-days').querySelectorAll('.repitem').forEach((b) => {
+    b.onclick = () => { state.selDay = b.dataset.d; renderFrags() }
+    // 右键菜单：生成该日日报 / 删除该日全部记录
+    b.oncontextmenu = async (e) => {
+      e.preventDefault()
+      const d = b.dataset.d
+      const pick = await window.api.app.ctxMenu([{ label: '生成日报' }, { label: '删除碎片' }])
+      if (pick === 0) {
+        const { openGen } = await import('./gen')
+        openGen('daily', d)
+      } else if (pick === 1) {
+        const n = fragOfDay(d).length
+        if (!n) return toast('这一天还没有记录', 'err')
+        if (!confirm('确定删除 ' + d + ' 全部 ' + n + ' 条碎片？\n（已生成的日报不受影响）')) return
+        state.db.frags = state.db.frags.filter((f) => f.d !== d)
+        persist()
+        state.selDay = ''
+        renderAll()
+        toast('已删除 ' + d + ' 的 ' + n + ' 条碎片', 'ok')
+      }
+    }
+  })
   const list = state.selDay ? matchOf(state.selDay) : []
   $('frag-stats').textContent = q
     ? '匹配 ' + days.reduce((s, k) => s + matchOf(k).length, 0) + ' 条 · 跨 ' + days.length + ' 天'

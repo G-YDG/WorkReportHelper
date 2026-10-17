@@ -1,5 +1,5 @@
 // src/main/ipc.js — IPC 白名单注册：渲染侧只能调用此处注册的通道
-import { app, dialog, ipcMain } from 'electron'
+import { app, dialog, ipcMain, Menu } from 'electron'
 import { writeFile, mkdir } from 'node:fs/promises'
 import { join, dirname } from 'node:path'
 import { loadDb, saveDb, encryptKey, decryptKey, dataFilePath } from './services/store'
@@ -58,4 +58,13 @@ export function registerIpc({ win }) {
     return res.canceled ? null : res.filePaths[0]
   })
   ipcMain.handle('notify', (_e, title, body) => showNotification(title, body))
+  // 通用右键菜单：items=[{label}]，返回点击项下标；未选择（点击别处关闭）返回 -1
+  ipcMain.handle('app:ctx-menu', (_e, items) =>
+    new Promise((resolve) => {
+      const menu = Menu.buildFromTemplate(
+        (items || []).map((it, i) => ({ label: it.label, click: () => resolve(i) }))
+      )
+      menu.popup({ window: win, callback: () => setTimeout(() => resolve(-1), 0) })
+    })
+  )
 }

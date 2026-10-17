@@ -31,6 +31,7 @@ contextBridge.exposeInMainWorld('api', {
     pickDir: (defaultPath) => ipcRenderer.invoke('app:pick-dir', defaultPath),
     setBoot: (on2) => ipcRenderer.invoke('app:set-boot', on2),
     notify: (title, body) => ipcRenderer.invoke('notify', title, body),
+    ctxMenu: (items) => ipcRenderer.invoke('app:ctx-menu', items),
     onTray: (fn) => on('tray:toggle', fn)
   }
 })

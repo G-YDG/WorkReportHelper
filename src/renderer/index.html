@@ -91,11 +91,13 @@
         <div class="repwrap">
           <div class="replist" id="rep-list"></div>
           <div class="repdetail" id="rep-detail">
+            <div class="seg" id="rep-mode"><button class="on" data-m="preview">预览</button><button data-m="edit">编辑</button></div>
             <textarea id="rep-text" spellcheck="false"></textarea>
+            <div id="rep-preview" class="md-preview" style="display:none"></div>
             <div class="repfoot"><span class="when" id="rep-when"></span></div>
             <div class="repfoot">
               <button class="btn" id="rep-copy"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 012-2h10"/></svg>复制</button>
-              <button class="btn" id="rep-md"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><path d="M12 3v12m0 0l-4-4m4 4l4-4M4 21h16"/></svg>存为 .md</button>
+              <button class="btn" id="rep-copy-md"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 012-2h10M12 3v12m0 0l-4-4m4 4l4-4M4 21h16"/></svg>复制 Markdown</button>
               <button class="btn" id="rep-regen">重新生成</button>
             </div>
           </div>
@@ -128,8 +130,16 @@
         <button class="op x m-close" data-c="ovl-report"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
       </div>
       <div class="mbody">
-        <div class="pane"><h4>发给 AI 的提示词（可编辑，修改后点「生成」生效）</h4><textarea id="prompt" spellcheck="false"></textarea></div>
-        <div class="pane"><h4>AI 输出（可编辑保存）</h4><div id="gen"></div></div>
+        <div class="pane"><h4>报告生成<span style="margin-left:auto"><button class="btn sm ghost" id="prompt-reset" title="清空自定义指令，回退到内置模板">恢复默认</button></span></h4>
+          <div class="seg" id="prompt-mode"><button class="on" data-m="ins">生成提示词</button><button data-m="rec">工作碎片</button></div>
+          <textarea id="prompt" spellcheck="false"></textarea>
+          <div id="prompt-records" style="display:none"></div>
+        </div>
+        <div class="pane"><h4>AI 输出</h4>
+          <div class="seg" id="gen-mode"><button class="on" data-m="preview">预览</button><button data-m="edit">编辑</button></div>
+          <div id="gen" class="md-preview"></div>
+          <textarea id="gen-text" spellcheck="false" style="display:none"></textarea>
+        </div>
       </div>
       <div class="mfoot">
         <button class="btn primary" id="gen-run">生成</button>
@@ -237,7 +247,7 @@
         <button class="op x" id="edit-close" title="取消"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
       </div>
       <div class="mbody" style="grid-template-columns:1fr;display:flex;flex-direction:column;gap:12px">
-        <div class="field"><label>内容</label><input id="edit-x" placeholder="记录内容…" maxlength="200"></div>
+        <div class="field"><label>内容</label><textarea id="edit-x" rows="8" placeholder="记录内容…（支持多行）"></textarea></div>
       </div>
       <div class="mfoot"><button class="btn" id="edit-cancel">取消</button><button class="btn primary" id="edit-ok">确定</button></div>
     </div>

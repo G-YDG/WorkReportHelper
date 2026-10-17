@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { buildPrompt, localReport } from '../../shared/ai-text'
+import { buildPrompt, buildInstruction, buildRecords, composePrompt, localReport } from '../../shared/ai-text'
 
 const frags = [
   { d: '2026-10-16', t: '09:00', x: '评审会', done: true },
@@ -25,6 +25,35 @@ describe('buildPrompt（用户日报格式）', () => {
     expect(w).toContain('「### 本周完成工作」')
     const m = buildPrompt({ name: '本月', from: '2026-10-01', to: '2026-10-31' }, 'monthly', frags)
     expect(m).toContain('「### 本月完成工作」')
+  })
+})
+
+describe('指令与记录分离', () => {
+  it('buildInstruction 只含指令（无记录段）', () => {
+    const ins = buildInstruction({ name: '今天' }, 'daily')
+    expect(ins).toContain('工作汇报助理')
+    expect(ins).toContain('「### 今日完成工作」')
+    expect(ins).not.toContain("工作碎片（共")
+    expect(ins).not.toContain("工作碎片（共")
+  })
+  it('buildRecords 只含记录段', () => {
+    const rec = buildRecords(frags)
+    expect(rec).toContain('工作碎片（共 3 条）')
+    expect(rec).toContain('[order-center]')
+    expect(rec).not.toContain('输出格式')
+  })
+  it('buildPrompt = 指令 + 记录', () => {
+    const p = buildPrompt({ name: '今天' }, 'daily', frags)
+    expect(p).toBe(buildInstruction({ name: '今天' }, 'daily') + '\n\n' + buildRecords(frags))
+  })
+  it('composePrompt：用户指令覆盖默认，记录始终由数据生成', () => {
+    const custom = '自定义指令：只用一句话总结'
+    const p = composePrompt(custom, { name: '今天' }, 'daily', frags)
+    expect(p).toContain('自定义指令：只用一句话总结')
+    expect(p).toContain('工作碎片（共 3 条）')
+    expect(p).not.toContain('输出格式（严格遵守）') // 默认指令被覆盖
+    // 空指令回退默认
+    expect(composePrompt('', { name: '今天' }, 'daily', frags)).toContain('输出格式（严格遵守）')
   })
 })
 

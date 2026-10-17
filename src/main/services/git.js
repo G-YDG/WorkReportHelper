@@ -11,6 +11,18 @@ const run = (args, cwd, timeout = 10000) =>
     })
   })
 
+// 解析 git log 输出：%x1f 分隔字段、%x1e 分隔记录，多行 commit message（%B）不破坏结构
+export function parseGitLog(stdout) {
+  return String(stdout)
+    .split('\x1e')
+    .map((rec) => rec.replace(/^\n/, '').trim())
+    .filter(Boolean)
+    .map((rec) => {
+      const [h, t, ...rest] = rec.split('\x1f')
+      return { h: (h || '').trim(), t: (t || '').trim(), m: rest.join('\x1f').trim() }
+    })
+}
+
 export async function collectCommits(date, repos, onProgress) {
   const results = []
   await Promise.all(
@@ -33,18 +45,13 @@ export async function collectCommits(date, repos, onProgress) {
               '--since=' + since,
               '--until=' + until,
               ...(authorEmail ? ['--author=' + authorEmail] : []),
-              '--pretty=format:%h|%ad|%s',
+              // %x1f 字段分隔 / %x1e 记录分隔：%B 保留完整多行 message
+              '--pretty=format:%h%x1f%ad%x1f%B%x1e',
               '--date=format:%H:%M'
             ],
             repo.p
           )
-          out
-            .split('\n')
-            .filter(Boolean)
-            .forEach((line) => {
-              const [h, t, ...rest] = line.split('|')
-              results.push({ h, t, m: rest.join('|'), r: repo.n, d: date })
-            })
+          parseGitLog(out).forEach((c) => results.push({ ...c, r: repo.n, d: date }))
           onProgress?.(repo.n, true, results.length)
         } catch (e) {
           onProgress?.(repo.n, false, String(e.message || e).split('\n')[0])

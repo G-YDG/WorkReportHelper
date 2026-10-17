@@ -5,9 +5,8 @@ const recLine = (f) => f.d + ' ' + f.t + (f.r ? ' [' + f.r + ']' : '') + ' ' + f
 
 const headOf = (type) => (type === 'daily' ? '今日完成工作' : type === 'weekly' ? '本周完成工作' : '本月完成工作')
 
-// 默认提示词模板 —— 用户定稿版：Markdown 标题层级（二级=段落、三级=项目、四级=类别）
-export function buildPrompt(meta, type, frags) {
-  const lines = frags.map(recLine).join('\n')
+// 指令部分（可被用户编辑覆盖）：角色设定 + 输出格式要求
+export function buildInstruction(meta, type) {
   return (
     '角色：我是你的工作汇报助理。以下是我' + meta.name + '的碎片工作记录（Git 提交类碎片带 [仓库名] 标记），请整理成一份中国职场通用的' + TP[type] + '。\n\n' +
     '输出格式（严格遵守）：\n' +
@@ -15,9 +14,25 @@ export function buildPrompt(meta, type, frags) {
     '2) 组内按工作类别聚合：类别用加粗行「**类别**」（两到四个字的短词，如：功能开发、问题修复、代码重构、优化重构、日常维护），不加标题符号；同一类别的条目以「- 描述」列出，描述合并同类项、一句话讲清做了什么；不同类别块之间以一个空行分隔。\n' +
     '3) 第二段标题为「### 未完成工作」（三级标题），归纳记录中未完成（无「（已完成）」标记）的事项，条目格式「- 描述」；没有未完成事项时整段省略，不要输出该标题。\n' +
     '4) 只使用上述三/四级标题、加粗行与「-」列表，不要其他 Markdown 符号（如代码块、引用），不要输出额外说明。\n' +
-    '5) 语气平实，对上级汇报口吻。\n\n' +
-    '记录（共 ' + frags.length + ' 条）：\n' + lines
+    '5) 语气平实，对上级汇报口吻。'
   )
+}
+
+// 记录部分（只读，始终由数据生成，用户不可编辑）
+export function buildRecords(frags) {
+  const lines = frags.map(recLine).join('\n\n')
+  return '工作碎片（共 ' + frags.length + ' 条）：\n' + lines
+}
+
+// 默认完整提示词 = 指令 + 记录
+export function buildPrompt(meta, type, frags) {
+  return buildInstruction(meta, type) + '\n\n' + buildRecords(frags)
+}
+
+// 主进程拼接：用户指令（空则回退默认） + 由数据生成的记录（记录不可被覆盖）
+export function composePrompt(instruction, meta, type, frags) {
+  const ins = instruction && String(instruction).trim() ? String(instruction).trim() : buildInstruction(meta, type)
+  return ins + '\n\n' + buildRecords(frags)
 }
 
 // 本地降级生成（无 AI 配置/调用失败时）——结构对齐上述格式

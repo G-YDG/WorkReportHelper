@@ -26,7 +26,7 @@ export function bindFragRows(box) {
     row.querySelectorAll('.op').forEach((b) => (b.onclick = async () => {
       const a = b.dataset.a
       if (a === 'ok') toggleFrag(id)
-      else if (a === 'ed') { const v = await editBox('编辑这条碎片', state.db.frags.find((x) => x.id === id).x); if (v?.trim()) editFrag(id, v.trim()) }
+      else if (a === 'ed') { const v = await editBox('编辑碎片', state.db.frags.find((x) => x.id === id).x); if (v?.trim()) editFrag(id, v.trim()) }
       else if (a === 'del') { if (confirm('删除这条记录？')) delFrag(id) }
       renderAll()
     }))

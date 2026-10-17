@@ -1,12 +1,14 @@
-// src/renderer/src/views/reports.js — 报告管理：列表 / Tab 筛选 / 编辑 / 复制 / 导出 .md / 重新生成
+// src/renderer/src/views/reports.js — 报告管理：列表 / Tab 筛选 / 编辑 / 预览 / 复制 / 导出 .md / 重新生成
 import { state, persist } from '../state'
 import { $, esc, toast } from '../ui'
 import { TP, labelOf, isoWeek, monthOf } from '../../../../shared/periods'
 import { openGen } from './gen'
+import { mdToHtml } from '../md'
 
 const repId = (r) => r.type + ':' + r.d
 let repFilter = 'all'
 let selRep = null
+let repMode = 'preview' // preview | edit（默认预览）
 
 function repTitle(r) {
   if (r.type === 'daily') return labelOf(r.d)
@@ -37,10 +39,38 @@ export function renderReports() {
     '<button class="repitem' + (repId(r) === selRep ? ' on' : '') + '" data-id="' + repId(r) + '"><b>' + repTitle(r) +
     '<span class="tag">' + TP[r.type] + '</span></b><span>' + esc(r.text.split('\n')[0]) + '</span></button>'
   ).join('')
-  $('rep-list').querySelectorAll('.repitem').forEach((b) => (b.onclick = () => { selRep = b.dataset.id; renderReports() }))
+  $('rep-list').querySelectorAll('.repitem').forEach((b) => {
+    b.onclick = () => { selRep = b.dataset.id; renderReports() }
+    // 右键菜单：删除报告
+    b.oncontextmenu = async (e) => {
+      e.preventDefault()
+      const pick = await window.api.app.ctxMenu([{ label: '删除报告' }])
+      if (pick !== 0) return
+      if (!confirm('删除该报告？')) return
+      state.db.reports = state.db.reports.filter((r) => repId(r) !== b.dataset.id)
+      persist()
+      selRep = null
+      renderReports()
+      toast('已删除报告', 'ok')
+    }
+  })
   const cur = findRep(selRep)
   if (document.activeElement !== $('rep-text')) $('rep-text').value = cur.text
   $('rep-when').textContent = '生成于 ' + cur.when + ' · ' + repSrc(cur)
+  applyMode(cur)
+}
+
+// 编辑 / 预览模式切换：预览态把 textarea 内容渲染为 Markdown
+function applyMode(cur) {
+  const preview = repMode === 'preview'
+  $('rep-text').style.display = preview ? 'none' : ''
+  $('rep-preview').style.display = preview ? '' : 'none'
+  if (preview) $('rep-preview').innerHTML = mdToHtml((cur || findRep(selRep))?.text || $('rep-text').value)
+}
+function setMode(m) {
+  repMode = m
+  $('rep-mode').querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.m === m))
+  applyMode()
 }
 
 export function bindReports() {
@@ -51,19 +81,34 @@ export function bindReports() {
   }))
   // 新建报告：以当前筛选的周期类型为准（筛选停在日报/周报/月报时按该类型新建）
   $('rep-new').onclick = () => openGen(repFilter === 'all' ? 'daily' : repFilter)
-  $('rep-text').oninput = (e) => { const r = findRep(selRep); if (r) { r.text = e.target.value; persist() } }
-  $('rep-copy').onclick = async () => { try { await navigator.clipboard.writeText($('rep-text').value); toast('已复制', 'ok') } catch { toast('复制失败', 'err') } }
-  $('rep-md').onclick = async () => {
+  $('rep-mode').querySelectorAll('button').forEach((b) => (b.onclick = () => setMode(b.dataset.m)))
+  $('rep-text').oninput = (e) => {
     const r = findRep(selRep)
-    if (!r) return
-    const name = selRep.replace(/[:/]/g, '-') + '-' + TP[r.type] + '.md'
-    const dir = state.db.cfg.dir || ''
+    if (r) { r.text = e.target.value; persist() }
+    if (repMode === 'preview') applyMode() // 预览态下（理论上不可编辑）兜底刷新
+  }
+  // 复制：默认（预览模式）复制渲染后的富文本 HTML；编辑模式复制纯文本
+  $('rep-copy').onclick = async () => {
     try {
-      const p = await window.api.app.exportMd(name, $('rep-text').value, dir)
-      toast('已保存 ' + p, 'ok')
+      if (repMode === 'preview') {
+        const item = new ClipboardItem({
+          'text/html': new Blob([$('rep-preview').innerHTML], { type: 'text/html' }),
+          'text/plain': new Blob([$('rep-text').value], { type: 'text/plain' })
+        })
+        await navigator.clipboard.write([item])
+        toast('已复制（富文本，粘贴即保留格式）', 'ok')
+      } else {
+        await navigator.clipboard.writeText($('rep-text').value)
+        toast('已复制', 'ok')
+      }
     } catch (e) {
-      toast('导出失败：' + e.message, 'err')
+      // 富文本写入失败（浏览器兼容）时退回纯文本
+      try { await navigator.clipboard.writeText($('rep-text').value); toast('已复制纯文本', 'ok') } catch { toast('复制失败', 'err') }
     }
+  }
+  // 复制 Markdown 源码
+  $('rep-copy-md').onclick = async () => {
+    try { await navigator.clipboard.writeText($('rep-text').value); toast('已复制 Markdown 源码', 'ok') } catch { toast('复制失败', 'err') }
   }
   $('rep-regen').onclick = () => { const r = findRep(selRep); if (r) openGen(r.type) }
 }

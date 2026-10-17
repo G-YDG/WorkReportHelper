@@ -38,6 +38,24 @@ describe('git service', () => {
     expect(out).toHaveLength(1)
     expect(out[0].r).toBe('alpha')
   })
+  it('collectCommits 采集完整多行 commit message（含 body）', async () => {
+    const run = (c, env) => execSync(c, { cwd: repoA, ...(env ? { env } : {}) })
+    writeFileSync(join(repoA, 'c.txt'), 'z')
+    run('git add c.txt')
+    // cmd.exe 会截断含换行的参数，多行 message 用 -F 文件传入
+    const msg = 'feat: 完整框架\n\n- 新增主进程入口\n- 新增 IPC 白名单\n- 新增渲染端骨架'
+    writeFileSync(join(repoA, 'msg.txt'), msg)
+    const env = { ...process.env, GIT_AUTHOR_DATE: '2026-10-15T14:00:00', GIT_COMMITTER_DATE: '2026-10-15T14:00:00' }
+    run('git commit -qF msg.txt', env)
+    const out = await collectCommits('2026-10-15', [{ n: 'alpha', p: repoA, on: true }])
+    const multi = out.find((c) => c.m.startsWith('feat: 完整框架'))
+    expect(multi).toBeTruthy()
+    expect(multi.m).toContain('- 新增主进程入口')
+    expect(multi.m).toContain('- 新增 IPC 白名单')
+    expect(multi.m).toContain('- 新增渲染端骨架')
+    // 单行提交仍正常且不含分隔符残留
+    expect(out.find((c) => c.m === 'feat: 增加导出接口')).toBeTruthy()
+  })
   it('collectCommits 过滤掉非本人（仓库 git config user.email）的提交', async () => {
     const run = (c, env) => execSync(c, { cwd: repoA, ...(env ? { env } : {}) })
     // 他人提交（同一日期）

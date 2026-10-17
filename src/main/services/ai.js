@@ -1,4 +1,4 @@
-import { buildPrompt } from '../../../shared/ai-text'
+import { composePrompt } from '../../../shared/ai-text'
 import { decryptKey } from './store'
 
 // 解析一段 SSE 文本中的内容增量（纯函数，可测）；兼容 CRLF 行尾。
@@ -65,8 +65,8 @@ export async function testConnection(cfg) {
 
 export async function streamReport(cfg, type, meta, frags, onDelta, promptOverride) {
   if (!cfg.model) throw new Error('未配置模型名，请在设置中填写')
-  // promptOverride：渲染端可编辑的提示词；未传/为空时按默认模板拼接
-  const prompt = (promptOverride && String(promptOverride).trim()) || buildPrompt(meta, type, frags)
+  // promptOverride 是用户编辑的「指令部分」；记录部分始终由数据拼接，不可被覆盖
+  const prompt = composePrompt(promptOverride, meta, type, frags)
   const res = await fetch(normalizeUrl(cfg.url), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + decryptKey(cfg.keyEnc) },

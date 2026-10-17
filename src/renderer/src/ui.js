@@ -42,9 +42,9 @@ export function bindEditBox() {
   $('edit-ok').onclick = () => closeEdit(input.value)
   $('edit-cancel').onclick = () => closeEdit(null)
   $('edit-close').onclick = () => closeEdit(null)
+  // textarea：Enter 换行；Ctrl+Enter 提交
   input.onkeydown = (e) => {
-    if (e.key === 'Enter') closeEdit(input.value)
-    // Esc 由 main.js 的全局关闭处理兜底，这里同步 resolve(null)
+    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); closeEdit(input.value) }
     if (e.key === 'Escape') closeEdit(null)
   }
 }
