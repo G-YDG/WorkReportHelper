@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>工作报告助手</title>
+</head>
+<body>
+  <!-- 顶部自定义标题栏：可拖拽 + 关闭按钮（代替原型假任务栏；badge 供任务 11 renderToday 更新今日条数） -->
+  <div id="titlebar">
+    <span class="tb-left">工作报告助手<span class="badge" id="badge">0</span></span>
+    <button id="btn-close" title="隐藏到托盘">×</button>
+  </div>
+
+  <!-- 主窗口：结构迁移自 docs/原型.html .win 节点，id 原样保留 -->
+  <div class="win" id="win">
+    <aside class="nav">
+      <div class="brand"><span class="mark"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4h7l4 4v12H7z"/><path d="M10 15l3-3 2 2 3-3.5"/></svg></span><b>工作报告助手</b></div>
+      <button class="on" id="nav-today"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><path d="M12 8v5l3 2"/><circle cx="12" cy="12" r="9"/></svg>今日记录</button>
+      <button id="nav-frags"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><path d="M4 6h16M4 12h16M4 18h10"/><circle cx="19" cy="18" r="2.4"/></svg>工作碎片<span class="nvcount" id="cnt-frags"></span></button>
+      <button id="nav-reports"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><path d="M7 3h10v18H7zM7 8h10M10 12h5M10 16h5"/></svg>报告管理<span class="nvcount" id="cnt-reps"></span></button>
+      <button id="nav-repos"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><circle cx="6" cy="6" r="2.5"/><circle cx="6" cy="18" r="2.5"/><circle cx="17" cy="9" r="2.5"/><path d="M6 8.5v7M8.4 7.2l6.2 1.3M17 11.5c0 3.5-4 3-7 4"/></svg>Git 仓库<span class="nvcount" id="cnt-repos"></span></button>
+    </aside>
+
+    <div class="main">
+      <div class="top">
+        <div><h1 id="v-title">今日记录</h1><div class="sub" id="v-sub"></div></div>
+        <div class="acts">
+          <button class="btn ghost" id="btn-settings"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h8M16 7h4M4 17h4M12 17h8"/><circle cx="14" cy="7" r="2.2"/><circle cx="10" cy="17" r="2.2"/></svg>设置</button>
+        </div>
+      </div>
+
+      <!-- view: today -->
+      <div class="view on" id="view-today">
+        <div class="bento">
+          <div class="card">
+            <h3>速记<span class="n" style="display:flex;gap:8px;align-items:center"><button class="btn b-git" id="btn-git"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><circle cx="6" cy="6" r="2.5"/><circle cx="6" cy="18" r="2.5"/><circle cx="17" cy="9" r="2.5"/><path d="M6 8.5v7M8.4 7.2l6.2 1.3M17 11.5c0 3.5-4 3-7 4"/></svg>Git 导入</button><span id="today-count"></span></span></h3>
+            <div class="qwrap">
+              <input id="quick" placeholder="记一句刚才做了什么，如：开了个 APP V3.0 需求评审会" maxlength="200">
+              <span class="qbtns"><button class="btn" id="btn-save">待办</button><button class="btn primary" id="btn-done">完成</button></span>
+            </div>
+            <div class="gline" style="margin:16px 0 12px"></div>
+            <h3>今日碎片<span class="n" style="display:flex;gap:6px"><button class="btn b-ok" id="all-done"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M4 13l4 4L20 5"/></svg>一键完成</button><button class="btn b-cl" id="all-clear"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><path d="M5 7h14M9 7V5h6v2m-8 0l1 13h6l1-13"/></svg>一键清空</button></span></h3>
+            <div class="flowl">
+              <div class="frags" id="today-frags"></div>
+              <div class="axis" id="axis"><span class="gl" style="bottom:8px"></span></div>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:14px">
+            <div class="card entry">
+              <h3>今日概览</h3>
+              <div class="stat" id="ov-stat">0<small>条碎片 · 0 已完成</small></div>
+              <div class="gline"></div>
+              <div class="klist">
+                <span>最近记录 <b id="ov-last">—</b></span>
+                <span>日报 <b id="ov-rep">未生成</b></span>
+              </div>
+              <div class="gline"></div>
+              <button class="btn primary" id="btn-gen-daily" style="width:100%;justify-content:center" data-primary-action><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M4 20l10-10M13 4l7 7-4 4-7-7zM9 15l-2 6 6-2"/></svg>生成日报</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- view: frags -->
+      <div class="view" id="view-frags">
+        <div class="toolbar">
+          <input id="fq" placeholder="搜索碎片内容…（限定匹配日期列表）">
+          <button class="btn" id="frag-add"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>手动新增</button>
+          <button class="btn b-git" id="frag-git"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><circle cx="6" cy="6" r="2.5"/><circle cx="6" cy="18" r="2.5"/><circle cx="17" cy="9" r="2.5"/><path d="M6 8.5v7M8.4 7.2l6.2 1.3M17 11.5c0 3.5-4 3-7 4"/></svg>Git 导入</button>
+          <span class="stats" id="frag-stats"></span>
+        </div>
+        <div class="repwrap">
+          <div class="replist" id="frag-days"></div>
+          <div class="repdetail">
+            <div class="card" style="padding:8px 10px;flex:1;min-height:0;overflow:auto"><div id="frag-list"></div></div>
+            <div class="repfoot"><button class="btn b-ok" id="frag-done"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M4 13l4 4L20 5"/></svg>一键完成</button><button class="btn b-cl" id="frag-clear"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><path d="M5 7h14M9 7V5h6v2m-8 0l1 13h6l1-13"/></svg>一键清空</button><span class="when" id="frag-when" style="margin-left:auto;text-align:right"></span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- view: reports -->
+      <div class="view" id="view-reports">
+        <div class="toolbar">
+          <div class="seg" id="rep-tabs">
+            <button class="on" data-t="all">全部</button><button data-t="daily">日报</button><button data-t="weekly">周报</button><button data-t="monthly">月报</button>
+          </div>
+          <span class="stats" id="rep-stats"></span>
+          <button class="btn" id="rep-new"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><path d="M12 5v14M5 12h14"/></svg>新建报告</button>
+        </div>
+        <div class="repwrap">
+          <div class="replist" id="rep-list"></div>
+          <div class="repdetail" id="rep-detail">
+            <textarea id="rep-text" spellcheck="false"></textarea>
+            <div class="repfoot"><span class="when" id="rep-when"></span></div>
+            <div class="repfoot">
+              <button class="btn" id="rep-copy"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 012-2h10"/></svg>复制</button>
+              <button class="btn" id="rep-md"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><path d="M12 3v12m0 0l-4-4m4 4l4-4M4 21h16"/></svg>存为 .md</button>
+              <button class="btn" id="rep-regen">重新生成</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- view: repos -->
+      <div class="view" id="view-repos">
+        <div class="toolbar">
+          <button class="btn" id="repo-add"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>手动添加</button>
+          <button class="btn b-git" id="repo-scan"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><circle cx="11" cy="11" r="6"/><path d="M15.5 15.5L20 20M11 8v6M8 11h6"/></svg>扫描文件夹</button>
+          <input id="scan-dir" placeholder="要扫描的文件夹路径，如 D:\code">
+          <span class="stats" id="repo-stats"></span>
+        </div>
+        <div class="card" style="padding:14px">
+          <div style="font-size:12px;color:var(--text3);margin-bottom:10px">开关控制该仓库是否参与 Git 导入 · 扫描文件夹可自动发现所选目录下的所有 Git 仓库（含 .git 的子目录，向下最多 3 层），已存在的自动跳过</div>
+          <div id="repo-rows"></div>
+          <div class="mfoot" style="padding:12px 0 0"><button class="btn primary" id="repo-save">保存仓库配置</button><span class="hintx" id="repo-hint"></span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- report modal -->
+  <div class="ovl" id="ovl-report">
+    <div class="modal">
+      <div class="mhead"><b id="m-title">生成日报</b>
+        <div class="seg" id="gen-tabs" style="margin-left:10px"><button class="on" data-t="daily">日报</button><button data-t="weekly">周报</button><button data-t="monthly">月报</button></div>
+        <input type="date" id="gen-date" style="height:30px;padding:0 8px;border-radius:8px;border:1px solid var(--stroke2);background:var(--ink);color:var(--text);outline:none;color-scheme:dark;font-size:12.5px">
+        <span style="color:var(--text3);font-size:12px;margin-left:10px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" id="rep-src"></span>
+        <button class="op x m-close" data-c="ovl-report"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+      </div>
+      <div class="mbody">
+        <div class="pane"><h4>发给 AI 的提示词（真实拼接）</h4><div id="prompt"></div></div>
+        <div class="pane"><h4>AI 输出（可编辑保存）</h4><div id="gen"></div></div>
+      </div>
+      <div class="mfoot">
+        <button class="btn primary" id="gen-run">生成</button>
+        <button class="btn" id="gen-copy" disabled>复制</button>
+        <button class="btn" id="gen-save" disabled>存入报告管理</button>
+        <span class="hintx">保存后按日期归档，可在「报告管理」随时回看编辑</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- git import modal -->
+  <div class="ovl" id="ovl-git">
+    <div class="modal" style="width:min(680px,94vw)">
+      <div class="mhead"><b>Git 导入</b>
+        <button class="op x m-close" data-c="ovl-git"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+      </div>
+      <div class="mbody" style="grid-template-columns:1fr;display:flex;flex-direction:column;gap:12px">
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+          <span style="font-size:12.5px;color:var(--text2);flex:none">提交日期</span>
+          <input type="date" id="git-src" style="height:34px;padding:0 10px;border-radius:9px;border:1px solid var(--stroke2);background:var(--ink);color:var(--text);outline:none;color-scheme:dark;font-size:13px">
+          <button class="btn" id="git-collect"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 11-2.3-5.6M20 4v4h-4"/></svg>收集提交日志</button>
+          <span class="stats" id="git-stats" style="margin-left:0"></span>
+        </div>
+        <div class="chips" id="repo-tags"></div>
+        <div id="commit-list" style="max-height:300px;overflow:auto"></div>
+      </div>
+      <div class="mfoot">
+        <span style="font-size:12.5px;color:var(--text2);flex:none">导入日期</span>
+        <input type="date" id="git-target" style="height:34px;padding:0 10px;border-radius:9px;border:1px solid var(--stroke2);background:var(--ink);color:var(--text);outline:none;color-scheme:dark;font-size:13px">
+        <button class="btn primary" id="git-import" disabled>导入</button>
+        <span class="hintx">提交记为已完成 · 重复导入自动跳过 · 点击仓库标签可排除</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- manual add modal -->
+  <div class="ovl" id="ovl-add">
+    <div class="modal" style="width:min(420px,94vw)">
+      <div class="mhead"><b>手动新增记录</b>
+        <button class="op x m-close" data-c="ovl-add"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+      </div>
+      <div class="mbody" style="grid-template-columns:1fr;display:flex;flex-direction:column;gap:12px">
+        <div class="row2">
+          <div class="field"><label>日期</label><input type="date" id="add-date" style="color-scheme:dark"></div>
+          <div class="field"><label>时间</label><input type="time" id="add-time"></div>
+        </div>
+        <div class="field"><label>内容</label><input id="add-x" placeholder="记录当天做的事…" maxlength="200"></div>
+      </div>
+      <div class="mfoot"><button class="btn primary" id="add-ok">保存</button></div>
+    </div>
+  </div>
+
+  <!-- scan result modal -->
+  <div class="ovl" id="ovl-scan" style="z-index:26">
+    <div class="modal" style="width:min(560px,94vw)">
+      <div class="mhead"><b>扫描结果</b><span style="color:var(--text3);font-size:12px" id="scan-path"></span>
+        <button class="op x m-close" data-c="ovl-scan"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+      </div>
+      <div class="mbody" style="grid-template-columns:1fr;display:flex;flex-direction:column;gap:10px">
+        <div style="font-size:12.5px;color:var(--text2)" id="scan-sum"></div>
+        <div id="scan-list" style="max-height:280px;overflow:auto"></div>
+      </div>
+      <div class="mfoot">
+        <button class="btn primary" id="scan-ok">加入仓库管理</button>
+        <span class="hintx">仅添加新发现的仓库 · 点「保存仓库配置」后生效</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- settings modal -->
+  <div class="ovl" id="ovl-set">
+    <div class="modal" style="width:min(560px,94vw)">
+      <div class="mhead"><b>设置</b><button class="op x m-close" data-c="ovl-set"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+      <div class="mbody" style="grid-template-columns:1fr;display:flex;flex-direction:column;gap:16px">
+        <div class="field"><label>接口地址（OpenAI 兼容）</label><input id="s-url" placeholder="https://api.example.com/v1/chat/completions"></div>
+        <div class="row2">
+          <div class="field"><label>API Key</label><input id="s-key" type="password" placeholder="sk-…（留空保持已保存的 Key）"></div>
+          <div class="field"><label>模型名</label><input id="s-model" placeholder="如 deepseek-chat"></div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <button class="btn" id="s-test">测试连接</button><span class="testmsg" id="s-testmsg"></span>
+        </div>
+        <div class="gline"></div>
+        <div class="field"><label>数据保存路径（本地数据库，v1 固定）</label><input id="s-data" value="%APPDATA%\WorkReportHelper" disabled title="v1 固定：%APPDATA%\WorkReportHelper"></div>
+        <div class="toggle"><span class="sw" id="s-auto"></span>每天定时自动生成并通知</div>
+        <div class="row2">
+          <div class="field"><label>定时时间</label><input id="s-time" type="time" value="18:30"></div>
+          <div class="field"><label>报告导出目录</label><input id="s-dir" placeholder="默认与数据保存路径一致"></div>
+        </div>
+        <div class="gline"></div>
+        <div>
+          <div class="hkrow"><span>唤起 / 隐藏窗口</span><kbd id="s-hk1">Ctrl+Alt+E</kbd></div>
+          <p class="tip">真实程序中点击即可重录热键</p>
+        </div>
+        <div class="toggle"><span class="sw" id="s-boot"></span>开机自启</div>
+      </div>
+      <div class="mfoot"><button class="btn primary" id="s-save">保存设置</button><span class="hintx">Key 仅存本机加密配置</span></div>
+    </div>
+  </div>
+
+  <!-- edit modal：ui.js editBox 的静态节点（原生 prompt 的桌面端替代） -->
+  <div class="ovl" id="ovl-edit" style="z-index:30">
+    <div class="modal" style="width:min(420px,94vw)">
+      <div class="mhead"><b id="edit-title">编辑</b>
+        <button class="op x" id="edit-close" title="取消"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+      </div>
+      <div class="mbody" style="grid-template-columns:1fr;display:flex;flex-direction:column;gap:12px">
+        <div class="field"><label>内容</label><input id="edit-x" placeholder="记录内容…" maxlength="200"></div>
+      </div>
+      <div class="mfoot"><button class="btn" id="edit-cancel">取消</button><button class="btn primary" id="edit-ok">确定</button></div>
+    </div>
+  </div>
+
+  <div class="toasts" id="toasts"></div>
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>

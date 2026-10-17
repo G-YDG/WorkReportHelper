@@ -1,0 +1,22 @@
+appId: com.workreport.helper
+productName: WorkReportHelper
+directories:
+  output: dist
+files:
+  - out/**
+  - resources/icon.png
+extraResources:
+  - from: resources
+    to: resources
+    filter:
+      - icon.png
+extraMetadata:
+  main: out/main/index.js
+win:
+  target:
+    - nsis
+    - portable
+nsis:
+  oneClick: true
+  perMachine: false
+  allowToChangeInstallationDirectory: false

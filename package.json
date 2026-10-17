@@ -1,0 +1,20 @@
+{
+  "name": "work-report-helper",
+  "version": "0.1.0",
+  "main": "out/main/index.js",
+  "scripts": {
+    "dev": "electron-vite dev",
+    "build": "electron-vite build",
+    "test": "vitest run",
+    "test:e2e": "playwright test",
+    "dist": "electron-vite build && electron-builder"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.64.1",
+    "electron": "^44.8.0",
+    "electron-builder": "^26.15.3",
+    "electron-vite": "^6.0.0",
+    "playwright": "^1.64.1",
+    "vitest": "^5.0.5"
+  }
+}
