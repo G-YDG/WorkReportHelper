@@ -35,8 +35,8 @@ export function registerIpc({ win }) {
   })
   ipcMain.handle('git:scan', (_e, dir) => scanRepos(dir))
   ipcMain.handle('ai:test', (_e, cfg) => testConnection(cfg))
-  ipcMain.handle('ai:generate', async (_e, cfg, type, meta, frags) => {
-    return streamReport(cfg, type, meta, frags, (full) => win.webContents.send('ai:delta', full))
+  ipcMain.handle('ai:generate', async (_e, cfg, type, meta, frags, promptOverride) => {
+    return streamReport(cfg, type, meta, frags, (full) => win.webContents.send('ai:delta', full), promptOverride)
   })
   ipcMain.handle('app:export-md', async (_e, name, text, dir) => {
     const target = dir || dirname(DATA())

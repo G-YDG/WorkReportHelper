@@ -23,7 +23,7 @@ contextBridge.exposeInMainWorld('api', {
   },
   ai: {
     test: (cfg) => ipcRenderer.invoke('ai:test', cfg),
-    generate: (cfg, type, meta, frags) => ipcRenderer.invoke('ai:generate', cfg, type, meta, frags),
+    generate: (cfg, type, meta, frags, promptOverride) => ipcRenderer.invoke('ai:generate', cfg, type, meta, frags, promptOverride),
     onDelta: (fn) => on('ai:delta', fn)
   },
   app: {
