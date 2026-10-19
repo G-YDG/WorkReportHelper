@@ -13,6 +13,7 @@ extraResources:
 extraMetadata:
   main: out/main/index.js
 win:
+  icon: resources/icon.ico
   target:
     - nsis
     - portable
