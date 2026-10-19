@@ -52,15 +52,24 @@ kbd{display:inline-block;padding:1px 7px;border:1px solid var(--stroke2);border-
 /* views */
 .view{display:none;flex:1;overflow:auto;padding:18px 20px 28px}
 .view.on{display:block}
-.view::-webkit-scrollbar{width:8px}
-.view::-webkit-scrollbar-thumb{background:#333a46;border-radius:4px}
+/* 全局统一细滚动条（日期/内容列表、预览区、编辑器等所有滚动容器与 Git 仓库列表一致） */
+*::-webkit-scrollbar{width:6px;height:6px}
+*::-webkit-scrollbar-thumb{background:#333a46;border-radius:3px}
+*::-webkit-scrollbar-thumb:hover{background:#3f4756}
+*::-webkit-scrollbar-track{background:transparent}
+*::-webkit-scrollbar-corner{background:transparent}
 /* today bento */
 .bento{display:grid;grid-template-columns:1fr 300px;gap:14px}
 .card{background:var(--card);border:1px solid var(--stroke);border-radius:var(--r);padding:16px}
 .card h3{font-size:12.5px;color:var(--text3);font-weight:600;letter-spacing:.06em;margin-bottom:12px;display:flex;align-items:center;gap:8px}
 .card h3 .n{margin-left:auto;color:var(--text2);font-variant-numeric:tabular-nums;letter-spacing:0}
 .qwrap{position:relative}
-#quick{width:100%;padding:13px 178px 13px 14px;border-radius:12px;border:1px solid var(--stroke2);background:var(--ink);outline:none;font-size:15px;transition:.15s}
+#quick{width:100%;box-sizing:border-box;padding:12px 14px;border-radius:12px;border:1px solid var(--stroke2);background:var(--ink);outline:none;font-size:14px;line-height:1.6;transition:.15s;resize:vertical}
+.qrow{display:flex;gap:8px;margin-top:8px;align-items:flex-start}
+.qrow input{width:100%;box-sizing:border-box;min-width:0;padding:8px 12px;border-radius:10px;border:1px solid var(--stroke2);background:var(--ink);outline:none;color:var(--text)}
+.qrow input:focus{border-color:var(--ac)}
+.qrow .btn{flex:none}
+.qrow .chips .chip{cursor:pointer}
 #quick::placeholder{color:var(--text3)}
 #quick:focus{border-color:var(--ac);box-shadow:0 0 0 3px rgba(138,160,230,.15)}
 #quick.bad{border-color:var(--danger);animation:shake .3s}
@@ -85,7 +94,7 @@ kbd{display:inline-block;padding:1px 7px;border:1px solid var(--stroke2);border-
 .card h3 .n .b-cl:hover{background:rgba(221,117,128,.18);border-color:rgba(221,117,128,.65)}
 .card h3 .n .b-git{color:var(--ac);border-color:rgba(138,160,230,.4);background:var(--ac-soft)}
 .card h3 .n .b-git:hover{background:rgba(138,160,230,.2);border-color:rgba(138,160,230,.65)}
-.hash{font-family:Consolas,monospace;font-size:10.5px;color:var(--text3);border:1px solid var(--stroke);border-radius:5px;padding:0 5px;margin-left:8px;vertical-align:1px;white-space:nowrap}
+.hash{font-family:Consolas,monospace;font-size:10.5px;color:var(--text3);border:1px solid var(--stroke);border-radius:5px;padding:0 5px;margin-right:8px;vertical-align:1px;white-space:nowrap;flex:none}
 .commit{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;border:1px solid var(--stroke);background:var(--ink);margin-bottom:6px;cursor:pointer}
 .commit:hover{border-color:var(--stroke2)}
 .commit.sel{border-color:rgba(138,160,230,.45);background:rgba(138,160,230,.06)}
@@ -103,8 +112,6 @@ kbd{display:inline-block;padding:1px 7px;border:1px solid var(--stroke2);border-
 .chips .chip.off{opacity:.4}
 .chips .chip svg{width:11px;height:11px;stroke:currentColor;stroke-width:2}
 #repo-rows{display:flex;flex-direction:column;gap:8px;height:360px;overflow:auto;padding-right:6px}
-#repo-rows::-webkit-scrollbar{width:6px}
-#repo-rows::-webkit-scrollbar-thumb{background:#333a46;border-radius:3px}
 .rrow{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;border:1px solid var(--stroke);background:var(--ink);transition:border-color .15s}
 .rrow:hover{border-color:var(--stroke2)}
 .rrow input{border:none;background:transparent;outline:none;color:var(--text);font-size:13px;padding:4px 0;min-width:0}
@@ -119,15 +126,13 @@ kbd{display:inline-block;padding:1px 7px;border:1px solid var(--stroke2);border-
 /* frag list + axis */
 .flowl{display:flex;gap:14px;min-height:0}
 .frags{flex:1;overflow:auto;padding-right:6px;max-height:340px}
-.frags::-webkit-scrollbar{width:6px}
-.frags::-webkit-scrollbar-thumb{background:#333a46;border-radius:3px}
 .frag{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:10px;position:relative}
 .frag:hover{background:rgba(255,255,255,.035)}
 .frag .dash{width:26px;height:3px;border-radius:2px;background:var(--frag);flex:none;box-shadow:0 0 6px rgba(138,160,230,.12)}
 .frag.done .dash{background:var(--ok);box-shadow:0 0 8px rgba(110,203,180,.35)}
 .frag .t{color:var(--text3);font-size:12px;font-variant-numeric:tabular-nums;flex:none;width:40px}
-.frag .x{flex:1;font-size:13.5px;line-height:1.45;min-width:0;overflow-wrap:anywhere;white-space:pre-wrap;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-.frag:hover .x{-webkit-line-clamp:unset}
+.frag .x{flex:1;font-size:13.5px;line-height:1.45;min-width:0;overflow-wrap:anywhere;white-space:pre-wrap;display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden;cursor:pointer}
+.frag .x.open{display:block;-webkit-line-clamp:unset}
 .frag.done .x{color:var(--text3)}
 .frag .ops{display:none;gap:4px;flex:none}
 .frag:hover .ops{display:flex}

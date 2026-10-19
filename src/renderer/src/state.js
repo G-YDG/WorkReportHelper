@@ -8,6 +8,12 @@ export async function initState() {
   state.selDay = keyOf(new Date())
   return state.db
 }
+
+// 主进程数据变更（定时导入/生成报告）后重载内存副本
+export async function reloadDb() {
+  state.db = await window.api.store.load()
+  return state.db
+}
 export const persist = () => window.api.store.save(state.db).catch((e) => console.error('保存失败', e))
 export const fragOfDay = (d) => state.db.frags.filter((f) => f.d === d)
 export function addFrag(d, t, x, done, extra = {}) {

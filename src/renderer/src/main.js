@@ -1,6 +1,6 @@
 // src/renderer/src/main.js — 渲染端入口：视图切换 / 总渲染 / 各视图模块装配
 import './styles/main.css'
-import { initState, state } from './state'
+import { initState, reloadDb, state } from './state'
 import { bindEditBox, $ } from './ui'
 import { labelOf, keyOf } from '../../../shared/periods'
 import { bindToday } from './views/today'
@@ -42,6 +42,8 @@ initState()
     // 左侧导航（原型 634-637 行）
     VIEWS.forEach((k) => (document.getElementById('nav-' + k).onclick = () => switchView(k)))
     window.api.app.onTray((cmd) => { if (cmd === 'gen-daily') openGen('daily') })
+    // 主进程定时任务写入数据后，重载内存副本并刷新当前视图
+    window.api.app.onDbUpdated(async () => { await reloadDb(); renderAll() })
     switchView('today')
   })
   .catch((e) => {

@@ -38,38 +38,52 @@ app.whenReady().then(() => {
   // 替换主进程 dbCache，沿用触发时的 db 引用会把报告写进旧对象导致丢失
   const scheduler = createScheduler({
     onTrigger: async (_db, now) => {
-      const meta = genMeta('daily', now)
-      const today = keyOf(now)
-      let cur = getDb()
-      const cfg = cur.cfg
-      // 1. 配置了 Git 仓库时，先自动收集当天提交并导入碎片（按 hash 去重）
-      const repos = (cfg.repos || []).filter((r) => r.on !== false && r.p)
-      const failedRepos = []
-      if (repos.length) {
-        const commits = await collectCommits(today, repos, (repo, ok, msg) => {
-          if (!ok) failedRepos.push(repo)
-        })
-        const { db: next, added } = importCommits(cur, commits, today)
-        if (added) { setDb(next); cur = getDb() }
-      }
-      // 2. 当天无碎片（含导入后仍无）则跳过
-      const frags = cur.frags.filter((f) => f.d === today)
-      if (!frags.length) return
-      // 3. 生成日报：AI 优先，失败降级本地模板
-      let text
+      showNotification('工作报告助手', '定时日报开始执行')
       try {
-        text = cfg.url && cfg.keyEnc ? await streamReport(cfg, 'daily', meta, frags, () => {}) : localReport('daily', frags)
-      } catch {
-        text = localReport('daily', frags)
+        const meta = genMeta('daily', now)
+        const today = keyOf(now)
+        let cur = getDb()
+        const cfg = cur.cfg
+        // 1. 配置了 Git 仓库时，先自动收集当天提交并导入碎片（按 hash 去重）
+        const repos = (cfg.repos || []).filter((r) => r.on !== false && r.p)
+        const failedRepos = []
+        if (repos.length) {
+          showNotification('工作报告助手', '正在收集 Git 提交…')
+          const commits = await collectCommits(today, repos, (repo, ok, msg) => {
+            if (!ok) failedRepos.push(repo)
+          })
+          const { db: next, added } = importCommits(cur, commits, today)
+          if (added) {
+            setDb(next); cur = getDb()
+            win?.webContents.send('db:updated') // 渲染端内存副本重载，立即看到新碎片
+          }
+        }
+        // 2. 当天无碎片（含导入后仍无）则跳过
+        const frags = cur.frags.filter((f) => f.d === today)
+        if (!frags.length) {
+          showNotification('工作报告助手', '今日无工作碎片，已跳过日报生成')
+          return
+        }
+        // 3. 生成日报：AI 优先，失败降级本地模板
+        showNotification('工作报告助手', '正在生成日报…')
+        let text
+        try {
+          text = cfg.url && cfg.keyEnc ? await streamReport(cfg, 'daily', meta, frags, () => {}) : localReport('daily', frags)
+        } catch {
+          text = localReport('daily', frags) // AI 失败降级，不算执行失败
+        }
+        // 4. 覆盖保存 + 成功通知
+        const when = today + ' ' + String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0')
+        const latest = getDb()
+        const old = latest.reports.find((r) => r.type === 'daily' && r.d === meta.d)
+        if (old) { old.text = text; old.when = when } else latest.reports.push({ type: 'daily', d: meta.d, when, text })
+        persist()
+        win?.webContents.send('db:updated') // 报告入库后同步渲染端
+        const suffix = failedRepos.length ? '（' + failedRepos.length + ' 个仓库采集失败）' : ''
+        showNotification('工作报告助手', '今日日报已生成' + suffix)
+      } catch (e) {
+        showNotification('工作报告助手', '定时日报执行失败：' + String(e.message || e).slice(0, 100))
       }
-      // 4. 覆盖保存 + 通知
-      const when = today + ' ' + String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0')
-      const latest = getDb()
-      const old = latest.reports.find((r) => r.type === 'daily' && r.d === meta.d)
-      if (old) { old.text = text; old.when = when } else latest.reports.push({ type: 'daily', d: meta.d, when, text })
-      persist()
-      const suffix = failedRepos.length ? '（' + failedRepos.length + ' 个仓库采集失败）' : ''
-      showNotification('工作报告助手', '今日日报已生成' + suffix)
     }
   })
   setInterval(() => scheduler.tick(getDb()), 60_000)

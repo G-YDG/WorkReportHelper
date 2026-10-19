@@ -36,8 +36,13 @@
           <div class="card">
             <h3>速记<span class="n" style="display:flex;gap:8px;align-items:center"><button class="btn b-git" id="btn-git"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><circle cx="6" cy="6" r="2.5"/><circle cx="6" cy="18" r="2.5"/><circle cx="17" cy="9" r="2.5"/><path d="M6 8.5v7M8.4 7.2l6.2 1.3M17 11.5c0 3.5-4 3-7 4"/></svg>Git 导入</button></span></h3>
             <div class="qwrap">
-              <input id="quick" placeholder="记下做了什么，如：开需求评审会议" maxlength="200">
-              <span class="qbtns"><button class="btn" id="btn-save">待办</button><button class="btn primary" id="btn-done">完成</button></span>
+              <textarea id="quick" rows="3" placeholder="记下做了什么…（支持多行，Ctrl+Enter 完成录入）"></textarea>
+              <div class="qrow">
+                <input id="quick-r" style="flex:1;min-width:0" placeholder="项目（可选）">
+                <button class="btn" id="btn-save">待办</button>
+                <button class="btn primary" id="btn-done">完成</button>
+              </div>
+              <div class="chips" id="quick-r-chips" style="margin-top:8px"></div>
             </div>
             <div class="gline" style="margin:16px 0 12px"></div>
             <h3>今日碎片<span class="n" style="display:flex;gap:6px"><button class="btn b-ok" id="all-done"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M4 13l4 4L20 5"/></svg>一键完成</button><button class="btn b-cl" id="all-clear"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><path d="M5 7h14M9 7V5h6v2m-8 0l1 13h6l1-13"/></svg>一键清空</button></span></h3>
@@ -178,7 +183,7 @@
   <!-- manual add modal -->
   <div class="ovl" id="ovl-add">
     <div class="modal" style="width:min(420px,94vw)">
-      <div class="mhead"><b>手动新增记录</b>
+      <div class="mhead"><b>手动新增</b>
         <button class="op x m-close" data-c="ovl-add"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
       </div>
       <div class="mbody" style="grid-template-columns:1fr;display:flex;flex-direction:column;gap:12px">
@@ -186,7 +191,8 @@
           <div class="field"><label>日期</label><input type="date" id="add-date" style="color-scheme:dark"></div>
           <div class="field"><label>时间</label><input type="time" id="add-time"></div>
         </div>
-        <div class="field"><label>内容</label><input id="add-x" placeholder="记录当天做的事…" maxlength="200"></div>
+        <div class="field"><label>内容</label><textarea id="add-x" rows="4" placeholder="记录当天做的事…（支持多行）"></textarea></div>
+        <div class="field"><label>项目（可选）</label><input id="add-r" placeholder="如：工作报告助手"><div class="chips" id="add-r-chips" style="margin-top:8px"></div></div>
       </div>
       <div class="mfoot"><button class="btn primary" id="add-ok">保存</button></div>
     </div>

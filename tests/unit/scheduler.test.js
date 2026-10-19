@@ -20,13 +20,12 @@ describe('scheduler', () => {
     s.tick(dbWith('18:30', 3))
     await vi.waitFor(() => expect(calls).toHaveLength(1))
   })
-  it('无碎片 → 跳过且不重复触发', async () => {
+  it('无碎片也触发（是否跳过由 onTrigger 内判断，触发后可能先导入 Git 提交）', async () => {
     const calls = []
     const s = createScheduler({ now: () => new Date(2026, 9, 16, 18, 30), onTrigger: async () => calls.push(1) })
     s.tick(dbWith('18:30', 0))
-    s.tick(dbWith('18:30', 0))
-    await vi.waitFor(() => {})
-    expect(calls).toHaveLength(0)
+    s.tick(dbWith('18:30', 0)) // 同一分钟不重复
+    await vi.waitFor(() => expect(calls).toHaveLength(1))
   })
   it('同一分钟只触发一次；auto 关闭不触发', () => {
     let n = 0

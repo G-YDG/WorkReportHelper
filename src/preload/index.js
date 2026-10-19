@@ -2,7 +2,7 @@
 import { contextBridge, ipcRenderer } from 'electron'
 
 const on = (channel, fn) => {
-  const allowed = ['ai:delta', 'tray:toggle']
+  const allowed = ['ai:delta', 'tray:toggle', 'db:updated']
   if (allowed.includes(channel)) {
     const h = (_e, ...a) => fn(...a)
     ipcRenderer.on(channel, h)
@@ -33,6 +33,7 @@ contextBridge.exposeInMainWorld('api', {
     setBoot: (on2) => ipcRenderer.invoke('app:set-boot', on2),
     notify: (title, body) => ipcRenderer.invoke('notify', title, body),
     ctxMenu: (items) => ipcRenderer.invoke('app:ctx-menu', items),
-    onTray: (fn) => on('tray:toggle', fn)
+    onTray: (fn) => on('tray:toggle', fn),
+    onDbUpdated: (fn) => on('db:updated', fn)
   }
 })

@@ -1,4 +1,19 @@
-// src/renderer/src/ui.js — DOM 小工具：选择器 / 转义 / toast / editBox（原生 prompt 的桌面端替代）
+// src/renderer/src/ui.js — DOM 小工具：选择器 / 转义 / toast / editBox / 项目历史 chips
+import { state } from './state'
+
+// 项目历史 chips：从已有碎片的 r 字段聚合（按最近使用倒序去重），点击填充到 input
+export function renderProjectChips(box, inputEl, max = 8) {
+  const names = []
+  for (let i = state.db.frags.length - 1; i >= 0; i--) {
+    const r = state.db.frags[i].r
+    if (r && !names.includes(r)) names.push(r)
+    if (names.length >= max) break
+  }
+  box.innerHTML = names.length
+    ? names.map((n) => '<span class="chip" data-n="' + n + '">' + n + '</span>').join('')
+    : ''
+  box.querySelectorAll('.chip').forEach((c) => (c.onclick = () => { inputEl.value = c.dataset.n }))
+}
 export const $ = (id) => document.getElementById(id)
 export const esc = (s) =>
   s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]))

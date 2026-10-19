@@ -1,6 +1,6 @@
 // src/renderer/src/views/today.js — 今日记录视图：速记 / 今日碎片 / 概览
 import { state, addFrag, toggleFrag, editFrag, delFrag, fragOfDay, persist } from '../state'
-import { $, esc, toast, editBox } from '../ui'
+import { $, esc, toast, editBox, renderProjectChips } from '../ui'
 import { keyOf } from '../../../../shared/periods'
 import { renderAll } from '../main'
 import { openGen } from './gen'
@@ -14,8 +14,9 @@ const ICON_DEL = '<svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><path 
 
 export const fragRow = (f) =>
   '<div class="frag' + (f.done ? ' done' : '') + '" data-id="' + f.id + '">' +
-  '<span class="dash"></span><span class="t">' + f.t + '</span><span class="x">' + esc(f.x) +
-  (f.h ? '<span class="hash">' + esc((f.r ? f.r + ' · ' : '') + f.h) + '</span>' : '') + '</span>' +
+  '<span class="dash"></span><span class="t">' + f.t + '</span>' +
+  (f.h ? '<span class="hash">' + esc((f.r ? f.r + ' · ' : '') + f.h) + '</span>' : '') +
+  '<span class="x">' + esc(f.x) + '</span>' +
   '<span class="ops"><button class="op" data-a="ok">' + ICON_OK + '</button>' +
   '<button class="op" data-a="ed">' + ICON_ED + '</button>' +
   '<button class="op del" data-a="del">' + ICON_DEL + '</button></span></div>'
@@ -23,6 +24,11 @@ export const fragRow = (f) =>
 export function bindFragRows(box) {
   box.querySelectorAll('.frag').forEach((row) => {
     const id = +row.dataset.id
+    // 内容默认折叠为单行，点击展开/收起完整内容
+    row.querySelector('.x').onclick = (e) => {
+      e.stopPropagation()
+      e.currentTarget.classList.toggle('open')
+    }
     row.querySelectorAll('.op').forEach((b) => (b.onclick = async () => {
       const a = b.dataset.a
       if (a === 'ok') toggleFrag(id)
@@ -35,11 +41,14 @@ export function bindFragRows(box) {
 
 function addQuick(done) {
   const el = $('quick'), x = el.value.trim()
+  const r = $('quick-r').value.trim()
   if (!x) { el.classList.add('bad'); setTimeout(() => el.classList.remove('bad'), 350); return }
-  const f = addFrag(keyOf(new Date()), nowHM(), x, done)
+  const f = addFrag(keyOf(new Date()), nowHM(), x, done, r ? { r } : {})
   el.value = ''
+  $('quick-r').value = ''
   renderAll()
-  toast('已保存 · ' + f.t + (f.done ? '（已完成）' : '（待办）'), 'ok')
+  renderProjectChips($('quick-r-chips'), $('quick-r')) // 新项目进入历史候选
+  toast('已保存 · ' + f.t + (f.done ? '（已完成）' : '（待办）') + (r ? '（' + r + '）' : ''), 'ok')
 }
 
 export function renderToday() {
@@ -53,9 +62,13 @@ export function renderToday() {
 }
 
 export function bindToday() {
+  renderProjectChips($('quick-r-chips'), $('quick-r')) // 初始渲染项目历史候选
   $('btn-save').onclick = () => addQuick(false)
   $('btn-done').onclick = () => addQuick(true)
-  $('quick').onkeydown = (e) => { if (e.key === 'Enter') addQuick(false) }
+  // textarea：Enter 换行；Ctrl+Enter 快速完成录入
+  $('quick').onkeydown = (e) => {
+    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); addQuick(true) }
+  }
   $('btn-gen-daily').onclick = () => openGen('daily')
   $('btn-git').onclick = () => import('./gitimport').then((m) => m.openGit(keyOf(new Date())))
   $('all-done').onclick = () => {
