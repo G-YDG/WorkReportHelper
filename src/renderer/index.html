@@ -231,7 +231,18 @@
           <button class="btn" id="s-test">测试连接</button><span class="testmsg" id="s-testmsg"></span>
         </div>
         <div class="gline"></div>
-        <div class="field"><label>数据保存路径</label><input id="s-data" value="%APPDATA%\WorkReportHelper" disabled title="v1 固定：%APPDATA%\WorkReportHelper"></div>
+        <div class="field"><label>数据保存路径（修改后自动迁移数据文件）</label>
+          <div style="display:flex;gap:8px">
+            <input id="s-data" style="flex:1">
+            <button class="btn" id="s-data-pick">选择…</button>
+          </div>
+        </div>
+        <div class="gline"></div>
+        <div class="toggle"><span class="sw" id="s-auto"></span>每天定时自动生成并通知</div>
+        <div class="row2">
+          <div class="field"><label>定时时间</label><input id="s-time" type="time" value="18:30"></div>
+          <div class="field"></div>
+        </div>
         <div class="gline"></div>
         <div>
           <div class="hkrow"><span>唤起 / 隐藏窗口</span><kbd id="s-hk1">Alt+E</kbd></div>

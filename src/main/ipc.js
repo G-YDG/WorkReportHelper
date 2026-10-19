@@ -1,16 +1,22 @@
 // src/main/ipc.js — IPC 白名单注册：渲染侧只能调用此处注册的通道
 import { app, dialog, ipcMain, Menu } from 'electron'
 import { writeFile, mkdir } from 'node:fs/promises'
+import { existsSync, copyFileSync, mkdirSync } from 'node:fs'
 import { join, dirname } from 'node:path'
-import { loadDb, saveDb, encryptKey, decryptKey, dataFilePath } from './services/store'
+import { loadDb, saveDb, encryptKey, decryptKey, dataFilePath, getDataDir, setDataDir, defaultDataDir } from './services/store'
 import { collectCommits, scanRepos } from './services/git'
 import { streamReport, testConnection } from './services/ai'
 import { showNotification } from './services/notify'
 
 const DATA = () => dataFilePath()
 let dbCache = null
-export const getDb = () => (dbCache ??= loadDb(DATA()))
+export const getDb = () => {
+  dbCache ??= loadDb(DATA())
+  dbCache.cfg.dataPath = getDataDir() // UI 展示与保存均以真实数据目录为准
+  return dbCache
+}
 export const persist = () => saveDb(DATA(), getDb())
+export const setDb = (db) => { dbCache = db; persist() } // 定时任务导入碎片后替换缓存并落盘
 
 export function registerIpc({ win }) {
   ipcMain.handle('db:load', () => getDb())
@@ -44,6 +50,21 @@ export function registerIpc({ win }) {
     const p = join(target, name)
     await writeFile(p, text, 'utf-8')
     return p
+  })
+  // 修改数据保存目录：迁移 data.json / .bak 到新目录后写锚点；目标已有数据则拒绝
+  ipcMain.handle('app:set-data-dir', (_e, dir) => {
+    const target = String(dir || '').trim()
+    if (!target) return { ok: false, message: '目录不能为空' }
+    if (target === getDataDir()) return { ok: true, message: '目录未变化' }
+    const oldData = DATA()
+    const newData = join(target, 'data.json')
+    if (existsSync(newData)) return { ok: false, message: '目标目录已存在 data.json，为避免覆盖请先清理' }
+    mkdirSync(target, { recursive: true })
+    if (existsSync(oldData)) copyFileSync(oldData, newData)
+    if (existsSync(oldData + '.bak')) copyFileSync(oldData + '.bak', newData + '.bak')
+    setDataDir(target)
+    dbCache = null // 下次 getDb 从新位置加载
+    return { ok: true, message: '数据已迁移至 ' + target }
   })
   ipcMain.handle('app:set-boot', (_e, on) => {
     // Electron Windows：开机自启

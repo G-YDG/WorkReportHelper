@@ -29,6 +29,7 @@ contextBridge.exposeInMainWorld('api', {
   app: {
     exportMd: (name, text, dir) => ipcRenderer.invoke('app:export-md', name, text, dir),
     pickDir: (defaultPath) => ipcRenderer.invoke('app:pick-dir', defaultPath),
+    setDataDir: (dir) => ipcRenderer.invoke('app:set-data-dir', dir),
     setBoot: (on2) => ipcRenderer.invoke('app:set-boot', on2),
     notify: (title, body) => ipcRenderer.invoke('notify', title, body),
     ctxMenu: (items) => ipcRenderer.invoke('app:ctx-menu', items),

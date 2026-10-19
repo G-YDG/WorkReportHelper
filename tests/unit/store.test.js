@@ -3,7 +3,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { mkdtempSync, rmSync, readFileSync, writeFileSync, existsSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { loadDb, saveDb, encryptKey, decryptKey } from '../../src/main/services/store'
+import { loadDb, saveDb, encryptKey, decryptKey, getDataDir, setDataDir, defaultDataDir } from '../../src/main/services/store'
 
 let dir
 beforeEach(() => { dir = mkdtempSync(join(tmpdir(), 'wrh-')) })
@@ -65,5 +65,26 @@ describe('store', () => {
     const enc = encryptKey('sk-test-123')
     expect(enc).not.toBe('sk-test-123')
     expect(decryptKey(enc)).toBe('sk-test-123')
+  })
+})
+
+describe('数据目录锚点（可修改保存路径）', () => {
+  it('未设置锚点时返回默认目录', () => {
+    const anchor = join(dir, 'datapath.txt')
+    expect(getDataDir(anchor)).toBe(defaultDataDir())
+  })
+  it('setDataDir 写入锚点后 getDataDir 返回自定义目录；目录不存在时抛错', () => {
+    const anchor = join(dir, 'datapath.txt')
+    const custom = mkdtempSync(join(tmpdir(), 'wrh-data-'))
+    setDataDir(custom, anchor)
+    expect(getDataDir(anchor)).toBe(custom)
+    expect(() => setDataDir('X:\\__not_exist_dir__', anchor)).toThrow('目录不存在')
+    setDataDir('', anchor) // 清空回默认
+    expect(getDataDir(anchor)).toBe(defaultDataDir())
+  })
+  it('锚点文件损坏时回退默认目录', () => {
+    const anchor = join(dir, 'broken.txt')
+    writeFileSync(anchor, '')
+    expect(getDataDir(anchor)).toBe(defaultDataDir())
   })
 })

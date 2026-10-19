@@ -41,7 +41,38 @@ export function decryptKey(enc) {
     : buf.toString('utf-8')
 }
 
+// 数据目录锚点：自定义保存路径写在独立文件里（cfg 在 data.json 内，无法自指）
+export function anchorFilePath() {
+  return join(process.env.APPDATA || dirname(process.execPath), 'WorkReportHelper', 'datapath.txt')
+}
+
+export function defaultDataDir() {
+  return join(process.env.APPDATA || dirname(process.execPath), 'WorkReportHelper')
+}
+
+// 读锚点文件得到当前数据目录；空/损坏/未设置 → 默认目录
+export function getDataDir(anchorFile = anchorFilePath()) {
+  if (process.env.WORKREPORTHELPER_HOME) return process.env.WORKREPORTHELPER_HOME // E2E：临时目录隔离数据
+  try {
+    const dir = readFileSync(anchorFile, 'utf-8').trim()
+    if (dir && existsSync(dir)) return dir
+  } catch {
+    /* 无锚点或不可读 → 默认 */
+  }
+  return defaultDataDir()
+}
+
+// 写入/清空锚点；目录非法时抛错由调用方提示
+export function setDataDir(dir, anchorFile = anchorFilePath()) {
+  const d = String(dir || '').trim()
+  if (!d) {
+    writeFileSync(anchorFile, '')
+    return
+  }
+  if (!existsSync(d)) throw new Error('目录不存在：' + d)
+  writeFileSync(anchorFile, d)
+}
+
 export function dataFilePath() {
-  if (process.env.WORKREPORTHELPER_HOME) return join(process.env.WORKREPORTHELPER_HOME, 'data.json') // E2E：临时目录隔离数据
-  return join(process.env.APPDATA || dirname(process.execPath), 'WorkReportHelper', 'data.json')
+  return join(getDataDir(), 'data.json')
 }
