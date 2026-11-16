@@ -82,3 +82,24 @@ describe('scheduler 多时间点', () => {
     expect(calls).toEqual(['weekly', 'weekly'])
   })
 })
+
+describe('scheduler 周/月不同日期时间点', () => {
+  it('weekly points 在不同星期几各自触发', async () => {
+    const calls = []
+    const over = { weekly: { on: true, points: [{ day: 1, time: '09:00' }, { day: 5, time: '18:00' }] }, daily: { on: false, times: ['18:30'] }, monthly: { on: false, points: [{ day: 1, time: '09:00' }] } }
+    make(new Date(2026, 10, 16, 9, 0), calls).tick(db(over)) // 周一 09:00
+    make(new Date(2026, 10, 20, 18, 0), calls).tick(db(over)) // 周五 18:00
+    make(new Date(2026, 10, 20, 9, 0), calls).tick(db(over)) // 周五 09:00 不触发
+    await new Promise((r) => setTimeout(r, 0))
+    expect(calls).toEqual(['weekly', 'weekly'])
+  })
+  it('monthly points 在不同日期各自触发，同日期+时间同分钟去重', async () => {
+    const calls = []
+    const over = { monthly: { on: true, points: [{ day: 1, time: '09:00' }, { day: 15, time: '12:00' }] }, daily: { on: false, times: ['18:30'] }, weekly: { on: false, points: [{ day: 1, time: '09:00' }] } }
+    const s = make(new Date(2026, 10, 15, 12, 0), calls)
+    s.tick(db(over)); s.tick(db(over))
+    make(new Date(2026, 10, 1, 9, 0), calls).tick(db(over))
+    await new Promise((r) => setTimeout(r, 0))
+    expect(calls).toEqual(['monthly', 'monthly'])
+  })
+})

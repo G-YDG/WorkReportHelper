@@ -15,13 +15,25 @@ export function createScheduler({ now = () => new Date(), onTrigger }) {
       for (const type of ['daily', 'weekly', 'monthly']) {
         const s = sched[type]
         if (!s?.on) continue
-        if (type === 'weekly' && n.getDay() !== (s.weekday ?? 1)) continue
-        if (type === 'monthly' && n.getDate() !== (s.day ?? 1)) continue
-        // 多时间点：times 数组优先；旧单值 time 兼容回退
-        const times = Array.isArray(s.times) && s.times.length ? s.times : s.time ? [s.time] : []
-        for (const t of times) {
-          const key = type + '@' + t
-          if (t !== hm || lastFired[key] === stamp) continue
+        if (type === 'daily') {
+          // 同一天多时间点：times 数组优先；旧单值 time 兼容回退
+          const times = Array.isArray(s.times) && s.times.length ? s.times : s.time ? [s.time] : []
+          for (const t of times) {
+            const key = type + '@' + t
+            if (t !== hm || lastFired[key] === stamp) continue
+            lastFired[key] = stamp
+            void onTrigger(db, n, type)
+          }
+          continue
+        }
+        // weekly/monthly：points 日期+时间对（各自日期触发）；旧「weekday/day + times/time」兼容回退
+        const legacyDay = type === 'weekly' ? (s.weekday ?? 1) : (s.day ?? 1)
+        const ts = Array.isArray(s.times) && s.times.length ? s.times : s.time ? [s.time] : []
+        const points = Array.isArray(s.points) && s.points.length ? s.points : ts.map((t) => ({ day: legacyDay, time: t }))
+        const today = type === 'weekly' ? n.getDay() : n.getDate()
+        for (const p of points) {
+          const key = type + '@' + p.day + '@' + p.time
+          if (today !== p.day || p.time !== hm || lastFired[key] === stamp) continue
           lastFired[key] = stamp
           void onTrigger(db, n, type)
         }
