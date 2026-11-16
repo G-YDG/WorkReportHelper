@@ -184,3 +184,40 @@ test('Git 导入：仓库超过 8 个时标签默认收缩可展开', async () =
     await app.close()
   }
 })
+
+test('定时任务：日报多时间点增删与往返保存、重复报错', async () => {
+  const home = mkdtempSync(join(tmpdir(), 'wrh-e2e-times-'))
+  const app = await _electron.launch({ args: LAUNCH_ARGS, env: { ...process.env, WORKREPORTHELPER_HOME: home } })
+  try {
+    const win = await app.firstWindow()
+    await win.waitForSelector('#view-today.on')
+    await win.click('#btn-settings')
+    await win.waitForSelector('#ovl-set.show')
+    await win.click('.set-tabs button[data-t="sched"]')
+    const inputs = win.locator('#s-d-times input')
+    await expect(inputs).toHaveCount(1)
+    await win.click('#set-sched button[data-add="d"]')
+    await expect(inputs).toHaveCount(2)
+    await inputs.nth(1).fill('12:00')
+    await win.click('#s-save')
+    await expect(win.locator('#ovl-set')).toBeHidden()
+    const db = JSON.parse(readFileSync(join(home, 'data.json'), 'utf-8'))
+    expect(db.cfg.sched.daily.times).toEqual(['18:30', '12:00'])
+    // 重开回显 + 重复时间点报错不关闭
+    await win.click('#btn-settings')
+    await win.waitForSelector('#ovl-set.show')
+    await win.click('.set-tabs button[data-t="sched"]')
+    await expect(inputs).toHaveCount(2)
+    await inputs.nth(1).fill('18:30')
+    await win.click('#s-save')
+    await expect(win.locator('#ovl-set')).toBeVisible()
+    await expect(win.locator('#s-sched-err')).toContainText('重复')
+    // 删除一个时间点后保存成功
+    await win.click('#s-d-times .time-item:nth-child(2) [data-del]')
+    await expect(inputs).toHaveCount(1)
+    await win.click('#s-save')
+    await expect(win.locator('#ovl-set')).toBeHidden()
+  } finally {
+    await app.close()
+  }
+})

@@ -6,7 +6,23 @@ import { $, toast } from '../ui'
 import { renderAll } from '../main'
 
 let setTab = 'general' // 默认第一项通用；记忆上次停留的 tab，重开恢复
+const TIMES_LIMIT = 8 // 每类型时间点上限
 const sw = (id) => $(id).classList.contains('on')
+// 多时间点编辑器：列表渲染 / 读取 / 增删按钮禁用态同步
+const TIME_ITEM = (t) =>
+  '<span class="time-item"><input type="time" class="sched-ctl" value="' + t + '" aria-label="触发时间">' +
+  '<button type="button" class="op del" data-del aria-label="删除时间点"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></span>'
+const timesOf = (type) => [...$('s-' + type + '-times').querySelectorAll('input')].map((i) => i.value)
+function syncTimes(type) {
+  const box = $('s-' + type + '-times')
+  const n = box.querySelectorAll('input').length
+  document.querySelector('#set-sched [data-add="' + type + '"]').disabled = n >= TIMES_LIMIT
+  box.querySelectorAll('[data-del]').forEach((b) => (b.disabled = n <= 1))
+}
+function renderTimes(type, times) {
+  $('s-' + type + '-times').innerHTML = times.map(TIME_ITEM).join('')
+  syncTimes(type)
+}
 // 开关状态同步：视觉 class 与 aria-checked 保持一致（role="switch" 的 button）
 const setSwitch = (el, on) => { el.classList.toggle('on', on); el.setAttribute('aria-checked', String(on)) }
 const flipSwitch = (el) => setSwitch(el, !el.classList.contains('on'))
@@ -38,13 +54,14 @@ export function openSet() {
   setSwitch($('s-w-on'), !!sc.weekly.on)
   setSwitch($('s-m-on'), !!sc.monthly.on)
   setSwitch($('s-g-on'), !!c.gitAuto.on)
-  $('s-d-time').value = sc.daily.time
-  $('s-w-time').value = sc.weekly.time
-  $('s-m-time').value = sc.monthly.time
+  renderTimes('d', sc.daily.times)
+  renderTimes('w', sc.weekly.times)
+  renderTimes('m', sc.monthly.times)
   $('s-w-day').value = String(sc.weekly.weekday)
   $('s-m-day').value = String(sc.monthly.day)
   $('s-g-min').value = String(c.gitAuto.minutes)
   $('s-git-err').textContent = ''
+  $('s-sched-err').textContent = ''
   setSwitch($('s-boot'), !!c.boot)
   $('s-testmsg').textContent = ''
   applyTab(setTab)
@@ -57,6 +74,24 @@ export function bindSettings() {
   // 月报触发日期 1–28：保证短月（二月）也必触发
   $('s-m-day').innerHTML = Array.from({ length: 28 }, (_, i) => '<option value="' + (i + 1) + '">' + (i + 1) + ' 号</option>').join('')
   for (const id of ['s-d-on', 's-w-on', 's-m-on', 's-g-on', 's-boot']) $(id).onclick = () => flipSwitch($(id))
+  // 时间点增删（事件委托）：添加默认 12:00；至少保留一个时间点
+  $('set-sched').onclick = (e) => {
+    const add = e.target.closest('[data-add]')
+    if (add) {
+      const type = add.dataset.add
+      if (timesOf(type).length >= TIMES_LIMIT) return
+      $('s-' + type + '-times').insertAdjacentHTML('beforeend', TIME_ITEM('12:00'))
+      syncTimes(type)
+      return
+    }
+    const del = e.target.closest('[data-del]')
+    if (del && !del.disabled) {
+      const box = del.closest('.times')
+      if (box.querySelectorAll('input').length <= 1) return
+      del.closest('.time-item').remove()
+      syncTimes(box.id.slice(2, -6)) // 's-d-times' → 'd'
+    }
+  }
   // 数据保存路径：弹系统目录选择框
   $('s-data-pick').onclick = async () => {
     const dir = await window.api.app.pickDir($('s-data').value.trim() || undefined)
@@ -114,6 +149,17 @@ export function bindSettings() {
       return
     }
     $('s-git-err').textContent = ''
+    // 时间点校验：非空 / 不重复 / 不超上限，错误显示在定时任务 pane 并跳回
+    const schedTimes = {}
+    for (const [type, key] of [['d', 'daily'], ['w', 'weekly'], ['m', 'monthly']]) {
+      const ts = timesOf(type)
+      const bad = !ts.length || ts.some((t) => !t) ? '时间点不能为空'
+        : new Set(ts).size !== ts.length ? '时间点不能重复'
+        : ts.length > TIMES_LIMIT ? '最多 ' + TIMES_LIMIT + ' 个时间点' : ''
+      if (bad) { $('s-sched-err').textContent = bad; applyTab('sched'); return }
+      schedTimes[key] = ts
+    }
+    $('s-sched-err').textContent = ''
     const c = state.db.cfg
     c.url = $('s-url').value.trim()
     c.model = $('s-model').value.trim()
@@ -123,9 +169,9 @@ export function bindSettings() {
     if (!key && !c.keyEnc) c.keyEnc = ''
     c.dataPath = $('s-data').value.trim()
     c.sched = {
-      daily: { on: sw('s-d-on'), time: $('s-d-time').value || '18:30' },
-      weekly: { on: sw('s-w-on'), weekday: +$('s-w-day').value, time: $('s-w-time').value || '09:00' },
-      monthly: { on: sw('s-m-on'), day: +$('s-m-day').value, time: $('s-m-time').value || '09:00' }
+      daily: { on: sw('s-d-on'), times: schedTimes.daily },
+      weekly: { on: sw('s-w-on'), weekday: +$('s-w-day').value, times: schedTimes.weekly },
+      monthly: { on: sw('s-m-on'), day: +$('s-m-day').value, times: schedTimes.monthly }
     }
     c.gitAuto = { on: sw('s-g-on'), minutes: n }
     const bootChanged = !!c.boot !== sw('s-boot')

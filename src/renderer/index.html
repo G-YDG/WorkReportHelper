@@ -261,10 +261,11 @@
           </div>
         </div>
         <div class="set-pane" id="set-sched">
-          <div class="schedrow"><button type="button" class="sw" id="s-d-on" role="switch" aria-checked="false" aria-label="日报定时生成"></button><span class="lbl sched-name">日报</span><input type="time" id="s-d-time" class="sched-ctl" value="18:30" aria-label="日报触发时间"></div>
-          <div class="schedrow"><button type="button" class="sw" id="s-w-on" role="switch" aria-checked="false" aria-label="周报定时生成"></button><span class="lbl sched-name">周报</span><select id="s-w-day" class="sched-ctl" aria-label="周报触发星期"><option value="1">周一</option><option value="2">周二</option><option value="3">周三</option><option value="4">周四</option><option value="5">周五</option><option value="6">周六</option><option value="0">周日</option></select><input type="time" id="s-w-time" class="sched-ctl" value="09:00" aria-label="周报触发时间"></div>
-          <div class="schedrow"><button type="button" class="sw" id="s-m-on" role="switch" aria-checked="false" aria-label="月报定时生成"></button><span class="lbl sched-name">月报</span><select id="s-m-day" class="sched-ctl" aria-label="月报触发日期"></select><input type="time" id="s-m-time" class="sched-ctl" value="09:00" aria-label="月报触发时间"></div>
-          <p class="tip">周报/月报在触发点生成上一已完结自然周/自然月的报告；周期内无碎片跳过并通知。</p>
+          <div class="schedrow"><button type="button" class="sw" id="s-d-on" role="switch" aria-checked="false" aria-label="日报定时生成"></button><span class="lbl sched-name">日报</span><span class="times" id="s-d-times"></span><button type="button" class="btn sm ghost" data-add="d">+ 时间点</button></div>
+          <div class="schedrow"><button type="button" class="sw" id="s-w-on" role="switch" aria-checked="false" aria-label="周报定时生成"></button><span class="lbl sched-name">周报</span><select id="s-w-day" class="sched-ctl" aria-label="周报触发星期"><option value="1">周一</option><option value="2">周二</option><option value="3">周三</option><option value="4">周四</option><option value="5">周五</option><option value="6">周六</option><option value="0">周日</option></select><span class="times" id="s-w-times"></span><button type="button" class="btn sm ghost" data-add="w">+ 时间点</button></div>
+          <div class="schedrow"><button type="button" class="sw" id="s-m-on" role="switch" aria-checked="false" aria-label="月报定时生成"></button><span class="lbl sched-name">月报</span><select id="s-m-day" class="sched-ctl" aria-label="月报触发日期"></select><span class="times" id="s-m-times"></span><button type="button" class="btn sm ghost" data-add="m">+ 时间点</button></div>
+          <p class="testmsg err" id="s-sched-err" role="alert"></p>
+          <p class="tip">每个时间点独立触发生成（同周期报告覆盖保存）；周报/月报生成上一已完结自然周/自然月的报告；周期内无碎片跳过并通知。</p>
           <div class="gline"></div>
           <div class="schedrow"><button type="button" class="sw" id="s-g-on" role="switch" aria-checked="false" aria-label="Git 自动导入"></button><span class="lbl sched-name">Git 自动导入</span><input type="number" id="s-g-min" class="sched-ctl num" min="5" max="1440" step="5" value="30" aria-label="自动导入间隔分钟"><span class="lbl">分钟</span></div>
           <p class="testmsg err" id="s-git-err" role="alert"></p>
