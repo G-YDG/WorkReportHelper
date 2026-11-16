@@ -26,10 +26,12 @@ export async function runReportJob({ type, now, getDb, setDb, persist, notify, u
       notify('工作报告助手', '正在收集 Git 提交…')
       for (const day of days) {
         const commits = await collect(day, repos, (repo, ok) => { if (!ok) failed.push(repo) })
-        const { db: next, added } = importCommits(cur, commits, day)
-        if (added) { setDb(next); cur = getDb(); updated() }
+        // 导入基准现取 getDb()：await 期间渲染端保存可能替换 dbCache，用旧 cur 会丢用户碎片并落盘
+        const { db: next, added } = importCommits(getDb(), commits, day)
+        if (added) { setDb(next); updated() }
       }
     }
+    cur = getDb() // 回填结束后再取一次：最后一次 collect 期间的保存也要进入碎片过滤
     const frags = cur.frags.filter((f) => f.d >= meta.from && f.d <= meta.to)
     if (!frags.length) {
       notify('工作报告助手', meta.name + '无工作碎片，已跳过' + TP[type] + '生成')

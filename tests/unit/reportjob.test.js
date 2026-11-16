@@ -68,6 +68,27 @@ describe('runReportJob', () => {
     expect(s.db.frags).toHaveLength(2)
     expect(s.db.reports).toHaveLength(1)
   })
+  it('collect 期间 db 被替换且返回新提交 → 用户碎片与导入共存（不丢）', async () => {
+    const s = setup()
+    s.db.frags = [{ id: 1, d: '2026-11-16', done: true, x: '原有' }]
+    s.collect = vi.fn(async () => {
+      s.db = { ...s.db, frags: [...s.db.frags, { id: 2, d: '2026-11-16', done: false, x: '并发新增' }] }
+      return [{ h: 'a1', t: '10:00', m: 'feat: x', r: 'r' }]
+    })
+    await s.run('daily', MON)
+    expect(s.db.frags.map((f) => f.x).sort()).toEqual(['原有', '并发新增', 'feat: x'].sort())
+    expect(s.db.reports).toHaveLength(1)
+  })
+  it('最后一次 collect 期间新增周期内碎片 → 不误报跳过', async () => {
+    const s = setup()
+    s.collect = vi.fn(async () => {
+      s.db = { ...s.db, frags: [...s.db.frags, { id: 1, d: '2026-11-16', done: false, x: '并发新增' }] }
+      return []
+    })
+    await s.run('daily', MON)
+    expect(s.generate).toHaveBeenCalled()
+    expect(s.db.reports).toHaveLength(1)
+  })
   it('generate 抛错 → 失败通知，不写报告', async () => {
     const s = setup({ generate: vi.fn(async () => { throw new Error('ai down') }) })
     s.db.frags = [{ id: 1, d: '2026-11-16', done: true, x: '事' }]
