@@ -57,3 +57,28 @@ describe('scheduler 多类型', () => {
     expect(calls).toEqual(['weekly']) // 16 号非 1 号，monthly 不触发
   })
 })
+
+describe('scheduler 多时间点', () => {
+  it('daily 多时间点各自到点触发一次，同时间点同分钟不重复', async () => {
+    const calls = []
+    const cfgOver = { daily: { on: true, times: ['09:00', '18:30'] }, weekly: { on: false, times: ['09:00'], weekday: 1 }, monthly: { on: false, times: ['09:00'], day: 1 } }
+    const s = make(new Date(2026, 10, 16, 9, 0), calls)
+    s.tick(db(cfgOver))
+    await new Promise((r) => setTimeout(r, 0))
+    expect(calls).toEqual(['daily'])
+    const s2 = make(new Date(2026, 10, 16, 18, 30), calls)
+    s2.tick(db(cfgOver))
+    s2.tick(db(cfgOver))
+    await new Promise((r) => setTimeout(r, 0))
+    expect(calls).toEqual(['daily', 'daily'])
+  })
+  it('weekly 多时间点与星期几条件叠加', async () => {
+    const calls = []
+    const over = { weekly: { on: true, times: ['09:00', '12:00'], weekday: 1 } }
+    make(MON, calls).tick(db(over)) // 周一 09:00 命中第一个
+    make(new Date(2026, 10, 16, 12, 0), calls).tick(db(over)) // 周一 12:00 命中第二个
+    make(new Date(2026, 10, 17, 9, 0), calls).tick(db(over)) // 周二不触发
+    await new Promise((r) => setTimeout(r, 0))
+    expect(calls).toEqual(['weekly', 'weekly'])
+  })
+})
