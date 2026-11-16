@@ -261,11 +261,11 @@
           </div>
         </div>
         <div class="set-pane" id="set-sched">
-          <div class="schedrow"><button type="button" class="sw" id="s-d-on" role="switch" aria-checked="false" aria-label="日报定时生成"></button><span class="lbl sched-name">日报</span><span class="times" id="s-d-times"></span><button type="button" class="btn sm ghost" data-add="d" aria-label="添加时间">+</button></div>
-          <div class="schedrow"><button type="button" class="sw" id="s-w-on" role="switch" aria-checked="false" aria-label="周报定时生成"></button><span class="lbl sched-name">周报</span><span class="times" id="s-w-points"></span><button type="button" class="btn sm ghost" data-add="w" aria-label="添加时间">+</button></div>
-          <div class="schedrow"><button type="button" class="sw" id="s-m-on" role="switch" aria-checked="false" aria-label="月报定时生成"></button><span class="lbl sched-name">月报</span><span class="times" id="s-m-points"></span><button type="button" class="btn sm ghost" data-add="m" aria-label="添加时间">+</button></div>
+          <div class="schedrow"><button type="button" class="sw" id="s-d-on" role="switch" aria-checked="false" aria-label="日报定时生成"></button><span class="lbl sched-name">日报</span><span class="times" id="s-d-times"><button type="button" class="btn sm ghost" data-add="d" aria-label="添加时间">+</button></span></div>
+          <div class="schedrow"><button type="button" class="sw" id="s-w-on" role="switch" aria-checked="false" aria-label="周报定时生成"></button><span class="lbl sched-name">周报</span><span class="times" id="s-w-points"><button type="button" class="btn sm ghost" data-add="w" aria-label="添加时间">+</button></span></div>
+          <div class="schedrow"><button type="button" class="sw" id="s-m-on" role="switch" aria-checked="false" aria-label="月报定时生成"></button><span class="lbl sched-name">月报</span><span class="times" id="s-m-points"><button type="button" class="btn sm ghost" data-add="m" aria-label="添加时间">+</button></span></div>
           <p class="testmsg err" id="s-sched-err" role="alert"></p>
-          <p class="tip">每个时间到点独立触发生成（同周期报告覆盖保存）；周报/月报生成上一已完结自然周/自然月的报告；周期内无碎片跳过并通知。</p>
+          <p class="tip">每个时间到点独立触发生成（同周期报告覆盖保存）；周期内无碎片跳过并通知。</p>
           <div class="gline"></div>
           <div class="schedrow"><button type="button" class="sw" id="s-g-on" role="switch" aria-checked="false" aria-label="Git 自动导入"></button><span class="lbl sched-name">Git 自动导入</span><input type="number" id="s-g-min" class="sched-ctl num" min="5" max="1440" step="5" value="30" aria-label="自动导入间隔分钟"><span class="lbl">分钟</span></div>
           <p class="testmsg err" id="s-git-err" role="alert"></p>

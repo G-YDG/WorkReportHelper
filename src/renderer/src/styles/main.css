@@ -311,9 +311,10 @@ input:focus-visible,textarea:focus-visible,select:focus-visible{outline:none;bor
 .sched-ctl:focus{border-color:var(--ac);box-shadow:var(--ring)}
 .sched-ctl.num{width:84px}
 #s-git-err:empty,#s-sched-err:empty{display:none} /* 空错误段不占 flex gap slot */
-/* 多时间点编辑器 */
-.times{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
-.time-item{display:inline-flex;gap:4px;align-items:center}
+/* 多时间点编辑器：容器占满行剩余宽度内部换行，加号按钮在容器内流式跟随末点 */
+.times{display:flex;gap:6px;flex-wrap:wrap;align-items:center;flex:1;min-width:0}
+.times>.btn{flex:none}
+.time-item{display:inline-flex;gap:4px;align-items:center;flex:none}
 .time-item .op{width:24px;height:24px;border-radius:6px}
 .time-item .op svg{width:12px;height:12px}
 .time-item .op:disabled{opacity:.35;cursor:not-allowed}

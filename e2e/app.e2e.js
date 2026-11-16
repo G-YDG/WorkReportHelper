@@ -298,3 +298,27 @@ test('设置：畸形 points/times 成员不致死路，弹窗正常打开', asy
     await app.close()
   }
 })
+
+test('定时任务：三个时间点时加号按钮跟随末点同行不换行独占地', async () => {
+  const home = mkdtempSync(join(tmpdir(), 'wrh-e2e-wrap-'))
+  writeFileSync(join(home, 'data.json'), JSON.stringify({
+    frags: [], reports: [], nid: 1,
+    cfg: { repos: [], sched: { weekly: { on: true, points: [{ day: 5, time: '18:00' }, { day: 6, time: '18:00' }, { day: 1, time: '12:00' }] } } }
+  }))
+  const app = await _electron.launch({ args: LAUNCH_ARGS, env: { ...process.env, WORKREPORTHELPER_HOME: home } })
+  try {
+    const win = await app.firstWindow()
+    await win.waitForSelector('#view-today.on')
+    await win.click('#btn-settings')
+    await win.waitForSelector('#ovl-set.show')
+    await win.click('.set-tabs button[data-t="sched"]')
+    const last = win.locator('#s-w-points .time-item').nth(2)
+    const add = win.locator('#s-w-points [data-add="w"]')
+    const lb = await last.boundingBox()
+    const ab = await add.boundingBox()
+    // 加号应流式跟在末点之后（同一行内），而非独自换行
+    expect(ab.y).toBeLessThan(lb.y + lb.height)
+  } finally {
+    await app.close()
+  }
+})

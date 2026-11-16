@@ -35,12 +35,18 @@ function syncEditor(type) {
   document.querySelector('#set-sched [data-add="' + type + '"]').disabled = n >= TIMES_LIMIT
   box.querySelectorAll('[data-del]').forEach((b) => (b.disabled = n <= 1))
 }
+// 重渲染保留容器内的加号按钮（按钮与时间点同流式换行）
+function fillEditor(box, html) {
+  const add = box.querySelector('[data-add]')
+  box.innerHTML = html
+  if (add) box.appendChild(add)
+}
 function renderTimes(type, times) {
-  editorBox(type).innerHTML = times.map(TIME_ITEM).join('')
+  fillEditor(editorBox(type), times.map(TIME_ITEM).join(''))
   syncEditor(type)
 }
 function renderPoints(type, points) {
-  editorBox(type).innerHTML = points.map((p) => POINT_ITEM(type, p)).join('')
+  fillEditor(editorBox(type), points.map((p) => POINT_ITEM(type, p)).join(''))
   syncEditor(type)
 }
 // 开关状态同步：视觉 class 与 aria-checked 保持一致（role="switch" 的 button）
@@ -97,7 +103,8 @@ export function bindSettings() {
       const type = add.dataset.add
       const box = editorBox(type)
       if (box.querySelectorAll('.time-item').length >= TIMES_LIMIT) return
-      box.insertAdjacentHTML('beforeend', type === 'd' ? TIME_ITEM('12:00') : POINT_ITEM(type, { day: 1, time: '12:00' }))
+      // 新点插在加号按钮之前，保持「点在前列、加号殿后」的流式顺序
+      box.querySelector('[data-add]').insertAdjacentHTML('beforebegin', type === 'd' ? TIME_ITEM('12:00') : POINT_ITEM(type, { day: 1, time: '12:00' }))
       syncEditor(type)
       return
     }
