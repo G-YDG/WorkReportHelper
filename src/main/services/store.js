@@ -4,12 +4,20 @@ import { join, dirname } from 'node:path'
 import { safeStorage } from 'electron'
 
 // 定时配置默认值（单一事实来源）：周报默认周一、月报默认 1 号（day 限 1–28 保证短月必触发）
+// times 为时间点数组（多时间点生成）；旧单值 time 由 migrateCfg 迁移为 [time]
 const SCHED_DEFAULT = {
-  daily: { on: false, time: '18:30' },
-  weekly: { on: false, time: '09:00', weekday: 1 },
-  monthly: { on: false, time: '09:00', day: 1 }
+  daily: { on: false, times: ['18:30'] },
+  weekly: { on: false, times: ['09:00'], weekday: 1 },
+  monthly: { on: false, times: ['09:00'], day: 1 }
 }
 const GIT_AUTO_DEFAULT = { on: false, minutes: 30 }
+
+// 逐类型合并默认值；time 单值 → times 数组（已有非空 times 优先），剔除旧 time 字段
+const withTimes = (base, over = {}) => {
+  const { time, ...rest } = over
+  const times = Array.isArray(rest.times) && rest.times.length ? rest.times : time ? [time] : base.times
+  return { ...base, ...rest, times }
+}
 
 // 旧 cfg.auto/time → sched.daily；已有 sched/gitAuto 逐类型补默认不覆盖；迁移后剔除旧字段
 export function migrateCfg(cfg) {
@@ -18,9 +26,9 @@ export function migrateCfg(cfg) {
   return {
     ...rest,
     sched: {
-      daily: { ...SCHED_DEFAULT.daily, ...sched.daily },
-      weekly: { ...SCHED_DEFAULT.weekly, ...sched.weekly },
-      monthly: { ...SCHED_DEFAULT.monthly, ...sched.monthly }
+      daily: withTimes(SCHED_DEFAULT.daily, sched.daily),
+      weekly: withTimes(SCHED_DEFAULT.weekly, sched.weekly),
+      monthly: withTimes(SCHED_DEFAULT.monthly, sched.monthly)
     },
     gitAuto: { ...GIT_AUTO_DEFAULT, ...rest.gitAuto }
   }

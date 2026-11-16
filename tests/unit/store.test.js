@@ -92,22 +92,28 @@ describe('数据目录锚点（可修改保存路径）', () => {
 describe('migrateCfg', () => {
   it('旧 auto/time 迁移为 sched.daily 并删除旧字段', () => {
     const cfg = migrateCfg({ repos: [], auto: true, time: '17:00' })
-    expect(cfg.sched.daily).toEqual({ on: true, time: '17:00' })
+    expect(cfg.sched.daily).toEqual({ on: true, times: ['17:00'] })
     expect(cfg.auto).toBeUndefined()
     expect(cfg.time).toBeUndefined()
   })
   it('无旧字段也无 sched → 全默认（daily 关）', () => {
     const cfg = migrateCfg({ repos: [] })
-    expect(cfg.sched.daily).toEqual({ on: false, time: '18:30' })
-    expect(cfg.sched.weekly).toEqual({ on: false, time: '09:00', weekday: 1 })
-    expect(cfg.sched.monthly).toEqual({ on: false, time: '09:00', day: 1 })
+    expect(cfg.sched.daily).toEqual({ on: false, times: ['18:30'] })
+    expect(cfg.sched.weekly).toEqual({ on: false, times: ['09:00'], weekday: 1 })
+    expect(cfg.sched.monthly).toEqual({ on: false, times: ['09:00'], day: 1 })
     expect(cfg.gitAuto).toEqual({ on: false, minutes: 30 })
   })
   it('已有 sched 不被覆盖，缺省类型补默认', () => {
     const cfg = migrateCfg({ sched: { weekly: { on: true, time: '08:00', weekday: 5 } }, gitAuto: { on: true, minutes: 10 } })
-    expect(cfg.sched.weekly).toEqual({ on: true, time: '08:00', weekday: 5 })
+    expect(cfg.sched.weekly).toEqual({ on: true, times: ['08:00'], weekday: 5 })
     expect(cfg.sched.daily.on).toBe(false)
     expect(cfg.gitAuto).toEqual({ on: true, minutes: 10 })
+  })
+  it('分支旧版 sched.<type>.time 单值迁移为 times 数组并剔除 time', () => {
+    const cfg = migrateCfg({ sched: { daily: { on: true, time: '12:30' }, monthly: { on: true, times: ['08:00', '20:00'], day: 1 } } })
+    expect(cfg.sched.daily).toEqual({ on: true, times: ['12:30'] })
+    expect(cfg.sched.monthly.times).toEqual(['08:00', '20:00'])
+    expect(cfg.sched.daily.time).toBeUndefined()
   })
   it('loadDb 读旧版 data.json 自动迁移', () => {
     writeFileSync(join(dir, 'data.json'), JSON.stringify({ frags: [], reports: [], cfg: { repos: [], auto: true, time: '18:30' }, nid: 1 }))
