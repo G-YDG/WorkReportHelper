@@ -306,7 +306,7 @@ input:focus-visible,textarea:focus-visible,select:focus-visible{outline:none;bor
 .set-pane{display:none;flex-direction:column;gap:16px}
 .set-pane.on{display:flex}
 .schedrow{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-.sched-name{width:76px;flex:none;font-size:13px;color:var(--text)}
+.sched-name{flex:none;font-size:13px;color:var(--text)} /* 宽度随内容：避免两字标签与控件间留大空白 */
 .sched-ctl{height:34px;padding:0 10px;border-radius:9px;border:1px solid var(--stroke2);background:var(--ink);color:var(--text);outline:none;color-scheme:dark;font-size:13px;transition:border-color var(--dur),box-shadow var(--dur)}
 .sched-ctl:focus{border-color:var(--ac);box-shadow:var(--ring)}
 .sched-ctl.num{width:84px}
