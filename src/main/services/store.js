@@ -13,13 +13,26 @@ const SCHED_DEFAULT = {
 }
 const GIT_AUTO_DEFAULT = { on: false, minutes: 30 }
 
+// 成员级归一（data.json 不可信）：time 必须 HH:MM；point 的 day 强转数字并按类型范围过滤。
+// 畸形成员丢弃（比静默永不触发/运行时抛错更可感知）；全丢弃回退默认
+const HM = /^\d{2}:\d{2}$/
+const normTime = (t) => (typeof t === 'string' && HM.test(t) ? t : null)
+const normPoint = (p, maxDay) => {
+  if (!p || typeof p !== 'object') return null
+  const day = Math.round(Number(p.day))
+  const time = normTime(p.time)
+  if (!Number.isFinite(day) || day < 0 || day > maxDay || !time) return null
+  return { day, time }
+}
+
 // 逐类型合并默认值；time 单值 → times 数组（已有非空 times 优先），剔除旧 time 字段
 // over 空值归一：畸形 data.json（sched.<type>: null）容忍回退默认，与旧 spread 语义等价，
 // 避免解构抛错被 loadDb 判为整库损坏而降级丢数据
 const withTimes = (base, over) => {
   const { time, ...rest } = over && typeof over === 'object' ? over : {}
-  const times = Array.isArray(rest.times) && rest.times.length ? rest.times : time ? [time] : base.times
-  return { ...base, ...rest, times }
+  const raw = Array.isArray(rest.times) && rest.times.length ? rest.times : time ? [time] : base.times
+  const times = raw.map(normTime).filter(Boolean)
+  return { ...base, ...rest, times: times.length ? times : base.times }
 }
 
 // weekly/monthly：旧「单 weekday/day + time/times」迁移为「同日期 × 各时间点」的 points；
@@ -28,9 +41,11 @@ const withPoints = (base, over, dayKey) => {
   const o = over && typeof over === 'object' ? over : {}
   const { time, times, points, weekday, day, ...rest } = o
   const legacyDay = (dayKey === 'weekday' ? weekday : day) ?? 1
+  const maxDay = dayKey === 'weekday' ? 6 : 28
   const ts = Array.isArray(times) && times.length ? times : time ? [time] : null
-  const pts = Array.isArray(points) && points.length ? points : ts ? ts.map((t) => ({ day: legacyDay, time: t })) : base.points
-  return { ...base, ...rest, points: pts }
+  const raw = Array.isArray(points) && points.length ? points : ts ? ts.map((t) => ({ day: legacyDay, time: t })) : base.points
+  const pts = raw.map((p) => normPoint(p, maxDay)).filter(Boolean)
+  return { ...base, ...rest, points: pts.length ? pts : base.points }
 }
 
 // 旧 cfg.auto/time → sched.daily；已有 sched/gitAuto 逐类型补默认不覆盖；迁移后剔除旧字段

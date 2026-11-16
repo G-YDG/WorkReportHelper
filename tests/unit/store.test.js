@@ -137,3 +137,20 @@ describe('migrateCfg', () => {
     expect(db.cfg.auto).toBeUndefined()
   })
 })
+
+describe('migrateCfg 成员级归一', () => {
+  it('points 畸形成员过滤：null/缺 time/越界 day/非法 time 丢弃，字符串 day 强转', () => {
+    const cfg = migrateCfg({ sched: { weekly: { on: true, points: [null, { day: 1 }, { day: '5', time: '09:00' }, { day: 7, time: '09:00' }, { day: 2, time: '9:00' }] } } })
+    expect(cfg.sched.weekly.points).toEqual([{ day: 5, time: '09:00' }])
+    const m = migrateCfg({ sched: { monthly: { on: true, points: [{ day: 28, time: '08:00' }, { day: 29, time: '08:00' }] } } })
+    expect(m.sched.monthly.points).toEqual([{ day: 28, time: '08:00' }])
+  })
+  it('旧 times:[null] 迁移不再产出 time:null 成员（全畸形回退默认）', () => {
+    const cfg = migrateCfg({ sched: { weekly: { on: true, times: [null], weekday: 5 } } })
+    expect(cfg.sched.weekly.points).toEqual([{ day: 1, time: '09:00' }])
+  })
+  it('daily times 畸形成员过滤', () => {
+    const cfg = migrateCfg({ sched: { daily: { on: true, times: [null, 900, '18:30'] } } })
+    expect(cfg.sched.daily.times).toEqual(['18:30'])
+  })
+})

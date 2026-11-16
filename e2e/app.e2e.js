@@ -278,3 +278,23 @@ test('定时任务：周报时间点支持不同星期几往返与同日期重�
     await app.close()
   }
 })
+
+test('设置：畸形 points/times 成员不致死路，弹窗正常打开', async () => {
+  const home = mkdtempSync(join(tmpdir(), 'wrh-e2e-malformed-'))
+  writeFileSync(join(home, 'data.json'), JSON.stringify({
+    frags: [], reports: [], nid: 1,
+    cfg: { repos: [], sched: { daily: { on: false, times: [900] }, weekly: { on: true, points: [null, { day: 1 }] } } }
+  }))
+  const app = await _electron.launch({ args: LAUNCH_ARGS, env: { ...process.env, WORKREPORTHELPER_HOME: home } })
+  try {
+    const win = await app.firstWindow()
+    await win.waitForSelector('#view-today.on')
+    await win.click('#btn-settings')
+    await win.waitForSelector('#ovl-set.show')
+    await win.click('.set-tabs button[data-t="sched"]')
+    await expect(win.locator('#s-w-points .time-item')).toHaveCount(1)
+    await expect(win.locator('#s-d-times .time-item')).toHaveCount(1)
+  } finally {
+    await app.close()
+  }
+})

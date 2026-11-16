@@ -32,6 +32,7 @@ export function createScheduler({ now = () => new Date(), onTrigger }) {
         const points = Array.isArray(s.points) && s.points.length ? s.points : ts.map((t) => ({ day: legacyDay, time: t }))
         const today = type === 'weekly' ? n.getDay() : n.getDate()
         for (const p of points) {
+          if (!p || typeof p !== 'object') continue // 畸形成员防护：未迁移/手改 db 不致 tick 抛错
           const key = type + '@' + p.day + '@' + p.time
           if (today !== p.day || p.time !== hm || lastFired[key] === stamp) continue
           lastFired[key] = stamp

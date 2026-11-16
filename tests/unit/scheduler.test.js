@@ -103,3 +103,13 @@ describe('scheduler 周/月不同日期时间点', () => {
     expect(calls).toEqual(['monthly', 'monthly'])
   })
 })
+
+describe('scheduler 畸形 points 成员防护', () => {
+  it('points 含 null 成员不抛错、合法成员照常触发', async () => {
+    const calls = []
+    const over = { weekly: { on: true, points: [null, { day: 1, time: '09:00' }] }, daily: { on: false, times: ['18:30'] }, monthly: { on: false, points: [{ day: 1, time: '09:00' }] } }
+    make(MON, calls).tick(db(over))
+    await new Promise((r) => setTimeout(r, 0))
+    expect(calls).toEqual(['weekly'])
+  })
+})

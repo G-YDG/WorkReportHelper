@@ -16,7 +16,7 @@ export function renderProjectChips(box, inputEl, max = 8) {
 }
 export const $ = (id) => document.getElementById(id)
 export const esc = (s) =>
-  s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]))
+  String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]))
 
 export function toast(msg, type) {
   const t = document.createElement('div')
