@@ -33,4 +33,16 @@ export const genMeta = (type, now = new Date()) => {
   const k = keyOf(now)
   return { d: k, from: k, to: k, name: '今天' }
 }
+// 上一已完结周期（定时周报/月报用）：日历减法避免 DST 毫秒偏移错周/错月
+export const prevMeta = (type, now = new Date()) => {
+  if (type === 'weekly') {
+    const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 7)
+    return { ...isoWeek(d), name: '上周' }
+  }
+  if (type === 'monthly') {
+    const d = new Date(now.getFullYear(), now.getMonth() - 1, 1)
+    return { ...monthOf(d), name: '上月' }
+  }
+  return { ...genMeta('daily', now), name: '今天' }
+}
 export const TP = { daily: '日报', weekly: '周报', monthly: '月报' }
