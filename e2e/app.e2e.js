@@ -1,6 +1,6 @@
 // e2e/app.e2e.js — E2E 主流程：记碎片 → 生成日报（本地降级）→ 报告管理可见 → 持久化落盘
 import { test, expect, _electron } from '@playwright/test'
-import { mkdtempSync } from 'node:fs'
+import { mkdtempSync, readFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { readFile } from 'node:fs/promises'
@@ -88,5 +88,43 @@ test('生成弹窗支持选择历史日期（今日无碎片时仍可打开并�
     await expect(win.locator('#ovl-report.show')).toBeVisible()
   } finally {
     await app3.close()
+  }
+})
+
+test('设置 tab：定时配置往返保存 + 非法间隔报错不关闭', async () => {
+  const home = mkdtempSync(join(tmpdir(), 'wrh-e2e-set-'))
+  const app = await _electron.launch({ args: LAUNCH_ARGS, env: { ...process.env, WORKREPORTHELPER_HOME: home } })
+  try {
+    const win = await app.firstWindow()
+    await win.waitForSelector('#view-today.on')
+    await win.click('#btn-settings')
+    await win.waitForSelector('#ovl-set.show')
+    // tab 切换：默认 AI 配置 pane 可见，定时任务 pane 隐藏
+    await expect(win.locator('#set-ai')).toBeVisible()
+    await expect(win.locator('#set-sched')).toBeHidden()
+    await win.click('.set-tabs button[data-t="sched"]')
+    await expect(win.locator('#set-sched')).toBeVisible()
+    // 开启周报（周一 09:00 默认）+ Git 自动导入 5 分钟
+    await win.click('#s-w-on')
+    await win.fill('#s-g-min', '5')
+    await win.click('#s-g-on')
+    await win.click('#s-save')
+    await expect(win.locator('#ovl-set')).toBeHidden()
+    const db = JSON.parse(readFileSync(join(home, 'data.json'), 'utf-8'))
+    expect(db.cfg.sched.weekly.on).toBe(true)
+    expect(db.cfg.sched.weekly.weekday).toBe(1)
+    expect(db.cfg.gitAuto).toEqual({ on: true, minutes: 5 })
+    // 重开回显 + 非法值报错且不关闭
+    await win.click('#btn-settings')
+    await win.waitForSelector('#ovl-set.show')
+    await win.click('.set-tabs button[data-t="sched"]')
+    await expect(win.locator('#s-w-on')).toHaveClass(/on/)
+    await expect(win.locator('#s-g-min')).toHaveValue('5')
+    await win.fill('#s-g-min', '1')
+    await win.click('#s-save')
+    await expect(win.locator('#ovl-set')).toBeVisible()
+    await expect(win.locator('#s-git-err')).toContainText('5')
+  } finally {
+    await app.close()
   }
 })

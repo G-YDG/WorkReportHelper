@@ -1,8 +1,24 @@
-// src/renderer/src/views/settings.js — 设置弹窗：AI 配置 / 定时 / 自启 / DPAPI 加密 Key
+// src/renderer/src/views/settings.js — 设置弹窗：三 tab（AI 配置 / 定时任务 / 通用）
 // 保存时仅在新填写 Key 时重新加密（留空保留旧 keyEnc）；boot 变化才调 setBoot
+// 定时配置读写 cfg.sched / cfg.gitAuto（store 迁移保证存在）；旧 auto/time 不再读写
 import { state, persist } from '../state'
 import { $, toast } from '../ui'
 import { renderAll } from '../main'
+
+let setTab = 'ai' // 记忆上次停留的 tab，重开恢复
+const sw = (id) => $(id).classList.contains('on')
+// 开关状态同步：视觉 class 与 aria-checked 保持一致（role="switch" 的 button）
+const setSwitch = (el, on) => { el.classList.toggle('on', on); el.setAttribute('aria-checked', String(on)) }
+const flipSwitch = (el) => setSwitch(el, !el.classList.contains('on'))
+
+function applyTab(t) {
+  setTab = t
+  document.querySelectorAll('.set-tabs button').forEach((b) => {
+    b.classList.toggle('on', b.dataset.t === t)
+    b.setAttribute('aria-pressed', String(b.dataset.t === t))
+  })
+  document.querySelectorAll('.set-pane').forEach((p) => p.classList.toggle('on', p.id === 'set-' + t))
+}
 
 export function openSet() {
   const c = state.db.cfg
@@ -10,27 +26,37 @@ export function openSet() {
   // Key 有保存记忆时用 ●●● 占位显示（点眼睛解密看实际值）；无记忆为空
   const hasKey = !!c.keyEnc
   $('s-key').value = hasKey ? '●●●●●●●●●●●●' : ''
-  $('s-key').placeholder = hasKey ? '点击 👁 查看已保存的 Key' : 'sk-…（留空保持已保存的 Key）'
+  $('s-key').placeholder = hasKey ? '点击眼睛按钮查看已保存的 Key' : 'sk-…（留空保持已保存的 Key）'
   $('s-key').type = 'password' // 每次打开重置为隐藏态
   $('s-key-eye').querySelector('.eye-on').style.display = ''
   $('s-key-eye').querySelector('.eye-off').style.display = 'none'
   $('s-model').value = c.model || 'deepseek-v4.1-flash' // 模型名默认值
   $('s-data').value = c.dataPath || ''
-  setSwitch($('s-auto'), !!c.auto) // 定时生成开关（恢复默认记忆）
-  $('s-time').value = c.time || '18:30'
+  // 定时任务 tab：三报告开关/时间/星期/日期 + Git 自动导入
+  const sc = c.sched
+  setSwitch($('s-d-on'), !!sc.daily.on)
+  setSwitch($('s-w-on'), !!sc.weekly.on)
+  setSwitch($('s-m-on'), !!sc.monthly.on)
+  setSwitch($('s-g-on'), !!c.gitAuto.on)
+  $('s-d-time').value = sc.daily.time
+  $('s-w-time').value = sc.weekly.time
+  $('s-m-time').value = sc.monthly.time
+  $('s-w-day').value = String(sc.weekly.weekday)
+  $('s-m-day').value = String(sc.monthly.day)
+  $('s-g-min').value = String(c.gitAuto.minutes)
+  $('s-git-err').textContent = ''
   setSwitch($('s-boot'), !!c.boot)
   $('s-testmsg').textContent = ''
+  applyTab(setTab)
   $('ovl-set').classList.add('show')
 }
 
-// 开关状态同步：视觉 class 与 aria-checked 保持一致（role="switch" 的 button）
-const setSwitch = (el, on) => { el.classList.toggle('on', on); el.setAttribute('aria-checked', String(on)) }
-const flipSwitch = (el) => setSwitch(el, !el.classList.contains('on'))
-
 export function bindSettings() {
   $('btn-settings').onclick = openSet
-  $('s-boot').onclick = () => flipSwitch($('s-boot'))
-  $('s-auto').onclick = () => flipSwitch($('s-auto'))
+  document.querySelectorAll('.set-tabs button').forEach((b) => (b.onclick = () => applyTab(b.dataset.t)))
+  // 月报触发日期 1–28：保证短月（二月）也必触发
+  $('s-m-day').innerHTML = Array.from({ length: 28 }, (_, i) => '<option value="' + (i + 1) + '">' + (i + 1) + ' 号</option>').join('')
+  for (const id of ['s-d-on', 's-w-on', 's-m-on', 's-g-on', 's-boot']) $(id).onclick = () => flipSwitch($(id))
   // 数据保存路径：弹系统目录选择框
   $('s-data-pick').onclick = async () => {
     const dir = await window.api.app.pickDir($('s-data').value.trim() || undefined)
@@ -80,6 +106,13 @@ export function bindSettings() {
     }
   }
   $('s-save').onclick = async () => {
+    // 间隔校验：非法时在字段旁报错且不关闭弹窗（主进程 clampMinutes 兜底）
+    const n = Number($('s-g-min').value)
+    if (!Number.isInteger(n) || n < 5 || n > 1440) {
+      $('s-git-err').textContent = '间隔需为 5–1440 之间的整数分钟'
+      return
+    }
+    $('s-git-err').textContent = ''
     const c = state.db.cfg
     c.url = $('s-url').value.trim()
     c.model = $('s-model').value.trim()
@@ -88,10 +121,14 @@ export function bindSettings() {
     if (key && key !== KEY_MASK) c.keyEnc = await window.api.store.encryptKey(key)
     if (!key && !c.keyEnc) c.keyEnc = ''
     c.dataPath = $('s-data').value.trim()
-    const bootChanged = !!c.boot !== $('s-boot').classList.contains('on')
-    c.auto = $('s-auto').classList.contains('on')
-    c.time = $('s-time').value || '18:30'
-    c.boot = $('s-boot').classList.contains('on')
+    c.sched = {
+      daily: { on: sw('s-d-on'), time: $('s-d-time').value || '18:30' },
+      weekly: { on: sw('s-w-on'), weekday: +$('s-w-day').value, time: $('s-w-time').value || '09:00' },
+      monthly: { on: sw('s-m-on'), day: +$('s-m-day').value, time: $('s-m-time').value || '09:00' }
+    }
+    c.gitAuto = { on: sw('s-g-on'), minutes: n }
+    const bootChanged = !!c.boot !== sw('s-boot')
+    c.boot = sw('s-boot')
     persist()
     if (bootChanged) await window.api.app.setBoot(c.boot)
     // 数据目录变化 → 迁移数据文件并切换锚点（失败则提示且不关闭弹窗）
