@@ -52,9 +52,9 @@ function renderGit() {
         .map((c) => {
           const isImp = imp.has(c.h)
           return (
-            '<div class="commit' + (isImp ? ' imp' : '') + '" style="cursor:default">' +
+            '<div class="commit static' + (isImp ? ' imp' : '') + '">' +
             '<span class="ch">' + c.h + '</span>' +
-            '<span class="chip" style="cursor:default;flex:none">' + esc(c.r) + '</span>' +
+            '<span class="chip">' + esc(c.r) + '</span>' +
             '<span class="cm">' + esc(c.m) + '</span>' +
             '<span class="cd">' + c.t + (isImp ? ' · 已导入' : '') + '</span></div>'
           )

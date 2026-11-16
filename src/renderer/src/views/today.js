@@ -16,25 +16,36 @@ export const fragRow = (f) =>
   '<div class="frag' + (f.done ? ' done' : '') + '" data-id="' + f.id + '">' +
   '<span class="dash"></span><span class="t">' + f.t + '</span>' +
   (f.h ? '<span class="hash">' + esc((f.r ? f.r + ' · ' : '') + f.h) + '</span>' : '') +
-  '<span class="x">' + esc(f.x) + '</span>' +
-  '<span class="ops"><button class="op" data-a="ok">' + ICON_OK + '</button>' +
-  '<button class="op" data-a="ed">' + ICON_ED + '</button>' +
-  '<button class="op del" data-a="del">' + ICON_DEL + '</button></span></div>'
+  '<span class="x" role="button" tabindex="0" aria-expanded="false" title="展开 / 收起完整内容">' + esc(f.x) + '</span>' +
+  '<span class="ops"><button class="op" data-a="ok" title="' + (f.done ? '标记为待办' : '标记为完成') + '" aria-label="' + (f.done ? '标记为待办' : '标记为完成') + '">' + ICON_OK + '</button>' +
+  '<button class="op" data-a="ed" title="编辑" aria-label="编辑">' + ICON_ED + '</button>' +
+  '<button class="op del" data-a="del" title="删除" aria-label="删除">' + ICON_DEL + '</button></span></div>'
 
 export function bindFragRows(box) {
   box.querySelectorAll('.frag').forEach((row) => {
     const id = +row.dataset.id
-    // 内容默认折叠为单行，点击展开/收起完整内容
-    row.querySelector('.x').onclick = (e) => {
-      e.stopPropagation()
-      e.currentTarget.classList.toggle('open')
-    }
+    // 内容默认折叠为单行，点击 / 回车 / 空格展开收起完整内容
+    const x = row.querySelector('.x')
+    const toggleOpen = () => x.setAttribute('aria-expanded', String(x.classList.toggle('open')))
+    x.onclick = (e) => { e.stopPropagation(); toggleOpen() }
+    x.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleOpen() } }
     row.querySelectorAll('.op').forEach((b) => (b.onclick = async () => {
       const a = b.dataset.a
+      const idx = [...box.querySelectorAll('.frag')].indexOf(row)
       if (a === 'ok') toggleFrag(id)
       else if (a === 'ed') { const v = await editBox('编辑碎片', state.db.frags.find((x) => x.id === id).x); if (v?.trim()) editFrag(id, v.trim()) }
       else if (a === 'del') { if (confirm('删除这条记录？')) delFrag(id) }
       renderAll()
+      // 重渲染销毁了被聚焦的按钮：按 id / 原位置找回新节点，保证键盘可连续操作
+      setTimeout(() => {
+        const view = document.querySelector('.view.on')
+        if (!view) return
+        const dels = view.querySelectorAll('.frag .op[data-a="del"]')
+        const target = a === 'del'
+          ? (dels[idx] || dels[idx - 1] || view.querySelector('#quick,#fq'))
+          : view.querySelector('.frag[data-id="' + id + '"] .op[data-a="' + a + '"]')
+        target?.focus()
+      }, 0)
     }))
   })
 }
@@ -54,6 +65,7 @@ function addQuick(done) {
 export function renderToday() {
   const d = keyOf(new Date()), list = fragOfDay(d), dn = list.filter((f) => f.done).length
   $('ov-stat').innerHTML = list.length + '<small>条碎片 · ' + dn + ' 已完成</small>'
+  $('ov-todo').textContent = String(list.length - dn)
   $('ov-last').textContent = list.length ? list[list.length - 1].t : '—'
   $('ov-rep').textContent = state.db.reports.some((r) => r.type === 'daily' && r.d === d) ? '已生成' : '未生成'
   const box = $('today-frags')

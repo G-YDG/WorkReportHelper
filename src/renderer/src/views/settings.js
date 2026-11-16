@@ -16,17 +16,21 @@ export function openSet() {
   $('s-key-eye').querySelector('.eye-off').style.display = 'none'
   $('s-model').value = c.model || 'deepseek-v4.1-flash' // 模型名默认值
   $('s-data').value = c.dataPath || ''
-  $('s-auto').classList.toggle('on', !!c.auto) // 定时生成开关（恢复默认记忆）
+  setSwitch($('s-auto'), !!c.auto) // 定时生成开关（恢复默认记忆）
   $('s-time').value = c.time || '18:30'
-  $('s-boot').classList.toggle('on', !!c.boot)
+  setSwitch($('s-boot'), !!c.boot)
   $('s-testmsg').textContent = ''
   $('ovl-set').classList.add('show')
 }
 
+// 开关状态同步：视觉 class 与 aria-checked 保持一致（role="switch" 的 button）
+const setSwitch = (el, on) => { el.classList.toggle('on', on); el.setAttribute('aria-checked', String(on)) }
+const flipSwitch = (el) => setSwitch(el, !el.classList.contains('on'))
+
 export function bindSettings() {
   $('btn-settings').onclick = openSet
-  $('s-boot').onclick = () => $('s-boot').classList.toggle('on')
-  $('s-auto').onclick = () => $('s-auto').classList.toggle('on')
+  $('s-boot').onclick = () => flipSwitch($('s-boot'))
+  $('s-auto').onclick = () => flipSwitch($('s-auto'))
   // 数据保存路径：弹系统目录选择框
   $('s-data-pick').onclick = async () => {
     const dir = await window.api.app.pickDir($('s-data').value.trim() || undefined)

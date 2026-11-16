@@ -23,27 +23,33 @@ export function renderRepos() {
       .map(
         (r, i) =>
           '<div class="rrow">' +
-          '<span class="sw' + (r.on !== false ? ' on' : '') + '" data-i="' + i + '" title="是否参与导入"></span>' +
+          '<button type="button" class="sw' + (r.on !== false ? ' on' : '') + '" data-i="' + i + '" role="switch" aria-checked="' + (r.on !== false) + '" title="是否参与导入" aria-label="参与导入：' + esc(r.n || '仓库 ' + (i + 1)) + '"></button>' +
           '<input class="rn" data-i="' + i + '" data-k="n" value="' + esc(r.n) + '" placeholder="仓库名">' +
           '<input class="rp" data-i="' + i + '" data-k="p" value="' + esc(r.p) + '" placeholder="路径 如 D:\\code\\app">' +
           (r.on === false ? '<span class="off-tag">已停用</span>' : '') +
           '<button class="op del" data-i="' + i + '" title="删除"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><path d="M5 7h14M9 7V5h6v2m-8 0l1 13h6l1-13"/></svg></button></div>'
       )
-      .join('') || '<div class="empty" style="padding:12px 0">尚未添加仓库 · 点「手动添加」或「扫描文件夹」</div>'
+      .join('') || '<div class="empty compact">尚未添加仓库 · 点「手动添加」或「扫描文件夹」</div>'
   $('repo-rows').querySelectorAll('.sw').forEach((s) => (s.onclick = () => {
     const i = +s.dataset.i
     repoDraft[i].on = repoDraft[i].on === false
     markDirty()
     renderRepos()
+    // 重渲染销毁了被聚焦的开关：按 data-i 找回新节点，保证键盘可连续操作
+    $('repo-rows').querySelector('.sw[data-i="' + i + '"]')?.focus()
   }))
   $('repo-rows').querySelectorAll('input').forEach((inp) => (inp.oninput = () => {
     repoDraft[+inp.dataset.i][inp.dataset.k] = inp.value
     markDirty()
   }))
   $('repo-rows').querySelectorAll('.op.del').forEach((b) => (b.onclick = () => {
-    repoDraft.splice(+b.dataset.i, 1)
+    const i = +b.dataset.i
+    repoDraft.splice(i, 1)
     markDirty()
     renderRepos()
+    // 焦点落到同位置（或末位）删除按钮；列表空则回「手动添加」
+    const dels = $('repo-rows').querySelectorAll('.op.del')
+    ;(dels[Math.min(i, dels.length - 1)] || $('repo-add')).focus()
   }))
   $('repo-stats').textContent = repoDraft.length + ' 个仓库 · ' + repoDraft.filter((r) => r.on !== false).length + ' 个参与导入'
   $('repo-save').disabled = !repoDirty
@@ -66,8 +72,8 @@ function renderScanResult(freshCount) {
       (f, i) =>
         '<div class="commit' + (f.fresh ? '' : ' imp') + '" data-i="' + i + '">' +
         '<input type="checkbox"' + (f.picked ? ' checked' : '') + (!f.fresh ? ' disabled' : '') + '>' +
-        '<span class="cm" style="white-space:normal"><b>' + esc(f.n) + '</b><br>' +
-        '<span style="color:var(--text3);font-size:11px">' + esc(f.p) + '</span></span>' +
+        '<span class="cm wrap"><b>' + esc(f.n) + '</b>' +
+        '<small>' + esc(f.p) + '</small></span>' +
         '<span class="cd">' + (f.fresh ? '新仓库' : '已存在') + '</span></div>'
     )
     .join('')

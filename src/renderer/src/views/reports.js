@@ -69,14 +69,20 @@ function applyMode(cur) {
 }
 function setMode(m) {
   repMode = m
-  $('rep-mode').querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.m === m))
+  $('rep-mode').querySelectorAll('button').forEach((b) => {
+    b.classList.toggle('on', b.dataset.m === m)
+    b.setAttribute('aria-pressed', String(b.dataset.m === m))
+  })
   applyMode()
 }
 
 export function bindReports() {
   $('rep-tabs').querySelectorAll('button').forEach((b) => (b.onclick = () => {
     repFilter = b.dataset.t; selRep = null
-    $('rep-tabs').querySelectorAll('button').forEach((x) => x.classList.toggle('on', x === b))
+    $('rep-tabs').querySelectorAll('button').forEach((x) => {
+      x.classList.toggle('on', x === b)
+      x.setAttribute('aria-pressed', String(x === b))
+    })
     renderReports()
   }))
   // 新建报告：以当前筛选的周期类型为准（筛选停在日报/周报/月报时按该类型新建）

@@ -26,7 +26,10 @@ const saveIns = (type, text) => {
 
 // 提示词面板 tab：指令（可编辑）/ 碎片记录（只读）
 function setPromptMode(m) {
-  $('prompt-mode').querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.m === m))
+  $('prompt-mode').querySelectorAll('button').forEach((b) => {
+    b.classList.toggle('on', b.dataset.m === m)
+    b.setAttribute('aria-pressed', String(b.dataset.m === m))
+  })
   const rec = m === 'rec'
   $('prompt').style.display = rec ? 'none' : ''
   $('prompt-records').style.display = rec ? '' : 'none'
@@ -35,7 +38,10 @@ function setPromptMode(m) {
 // 预览 / 编辑切换：编辑态填入全文（停止动画），预览态直接显示全文渲染
 function setGenMode(m) {
   genMode = m
-  $('gen-mode').querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.m === m))
+  $('gen-mode').querySelectorAll('button').forEach((b) => {
+    b.classList.toggle('on', b.dataset.m === m)
+    b.setAttribute('aria-pressed', String(b.dataset.m === m))
+  })
   const edit = m === 'edit'
   $('gen-text').style.display = edit ? '' : 'none'
   $('gen').style.display = edit ? 'none' : ''
@@ -70,7 +76,10 @@ export function openGen(type, dayKey) {
   genM = genMeta(type, base)
   if (type === 'daily') genM.name = dayKey && dayKey !== keyOf(new Date()) ? dayKey.replace(/^\d{4}-/, '') + ' 当天' : '今天'
   setTabsDisabled(false)
-  $('gen-tabs').querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.t === type))
+  $('gen-tabs').querySelectorAll('button').forEach((b) => {
+    b.classList.toggle('on', b.dataset.t === type)
+    b.setAttribute('aria-pressed', String(b.dataset.t === type))
+  })
   $('gen-date').value = genM.from // 周报回填周一、月报回填当月 1 号，均可被 date 控件接受
   $('m-title').textContent = '生成' + TP[type]
   const list = fragsOf(genM)

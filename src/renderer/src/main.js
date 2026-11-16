@@ -1,7 +1,7 @@
 // src/renderer/src/main.js — 渲染端入口：视图切换 / 总渲染 / 各视图模块装配
 import './styles/main.css'
 import { initState, reloadDb, state } from './state'
-import { bindEditBox, $ } from './ui'
+import { bindEditBox, initModals, $ } from './ui'
 import { labelOf, keyOf } from '../../../shared/periods'
 import { bindToday } from './views/today'
 import { bindFrags } from './views/frags'
@@ -21,7 +21,10 @@ const RENDER = {
 export function switchView(v) {
   state.view = v
   VIEWS.forEach((k) => {
-    document.getElementById('nav-' + k).classList.toggle('on', k === v)
+    const nav = document.getElementById('nav-' + k)
+    nav.classList.toggle('on', k === v)
+    if (k === v) nav.setAttribute('aria-current', 'page')
+    else nav.removeAttribute('aria-current')
     document.getElementById('view-' + k).classList.toggle('on', k === v)
   })
   renderAll() // 标题/副标题/计数随视图切换刷新
@@ -37,6 +40,7 @@ export function renderAll() {
 initState()
   .then((db) => {
     bindEditBox()
+    initModals()
     document.querySelectorAll('.m-close').forEach((b) => (b.onclick = () => document.getElementById(b.dataset.c).classList.remove('show')))
     bindToday(); bindFrags(); bindReports(); bindRepos(); bindGen(); bindGitImport(); bindSettings()
     // 左侧导航（原型 634-637 行）

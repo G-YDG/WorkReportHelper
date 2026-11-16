@@ -10,7 +10,7 @@ export function renderProjectChips(box, inputEl, max = 8) {
     if (names.length >= max) break
   }
   box.innerHTML = names.length
-    ? names.map((n) => '<span class="chip" data-n="' + n + '">' + n + '</span>').join('')
+    ? names.map((n) => '<span class="chip" data-n="' + esc(n) + '">' + esc(n) + '</span>').join('')
     : ''
   box.querySelectorAll('.chip').forEach((c) => (c.onclick = () => { inputEl.value = c.dataset.n }))
 }
@@ -23,7 +23,7 @@ export function toast(msg, type) {
   t.className = 'toast' + (type ? ' ' + type : '')
   t.textContent = msg
   $('toasts').appendChild(t)
-  setTimeout(() => t.remove(), 2600)
+  setTimeout(() => t.remove(), 3200)
 }
 
 // editBox(title, value) → Promise<string|null>：复用 #ovl-edit 静态弹窗。
@@ -50,6 +50,44 @@ function closeEdit(result) {
   const r = editResolve
   editResolve = null
   r(result)
+}
+
+// 模态焦点管理：打开时焦点移入弹窗、背景 inert（Tab 自然约束在弹窗内）；
+// 关闭时归还焦点给触发元素。用 MutationObserver 监听 .show，覆盖所有打开/关闭路径
+// （按钮 / Esc / 保存后自动关闭），调用方无需改动。
+const modalStack = []
+const FOCUSABLE = 'button:not([disabled]),input:not([disabled]),textarea:not([disabled]),select:not([disabled]),[tabindex]:not([tabindex="-1"])'
+
+function syncInert() {
+  const top = modalStack[modalStack.length - 1]?.ovl
+  const active = !!top
+  // toasts 不 inert：保留 aria-live 播报（弹窗打开期间的降级/失败提示仍可达）
+  for (const id of ['titlebar', 'win']) $(id).inert = active
+  document.querySelectorAll('.ovl').forEach((o) => { o.inert = active && o !== top })
+}
+function onModalOpen(ovl) {
+  modalStack.push({ ovl, prev: document.activeElement })
+  syncInert()
+  const first = [...ovl.querySelectorAll(FOCUSABLE)].find((el) => el.getClientRects().length)
+  ;(first || ovl).focus()
+}
+function onModalClose(ovl) {
+  const i = modalStack.findLastIndex((m) => m.ovl === ovl)
+  if (i < 0) return
+  const [m] = modalStack.splice(i, 1)
+  syncInert()
+  // 触发元素可能已随重渲染销毁（如碎片行按钮），销毁则不强行归还
+  if (m.prev?.isConnected) m.prev.focus()
+}
+export function initModals() {
+  document.querySelectorAll('.ovl').forEach((ovl) => {
+    new MutationObserver(() => {
+      const show = ovl.classList.contains('show')
+      const inStack = modalStack.some((m) => m.ovl === ovl)
+      if (show && !inStack) onModalOpen(ovl)
+      else if (!show && inStack) onModalClose(ovl)
+    }).observe(ovl, { attributes: true, attributeFilter: ['class'] })
+  })
 }
 
 export function bindEditBox() {

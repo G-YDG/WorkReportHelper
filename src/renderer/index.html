@@ -6,26 +6,26 @@
   <title>工作报告助手</title>
 </head>
 <body>
-  <!-- 顶部自定义标题栏：可拖拽 + 关闭按钮（代替原型假任务栏） -->
+  <!-- 顶部自定义标题栏：可拖拽 + 关闭按钮 -->
   <div id="titlebar">
     <span class="tb-left">工作报告助手</span>
-    <button id="btn-close" title="隐藏到托盘">×</button>
+    <button id="btn-close" title="隐藏到托盘" aria-label="隐藏到托盘">×</button>
   </div>
 
-  <!-- 主窗口：结构迁移自 docs/原型.html .win 节点，id 原样保留 -->
+  <!-- 主窗口：左侧导航 + 右侧视图区 -->
   <div class="win" id="win">
-    <aside class="nav">
-      <button class="on" id="nav-today"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><path d="M12 8v5l3 2"/><circle cx="12" cy="12" r="9"/></svg>今日记录</button>
-      <button id="nav-frags"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><path d="M4 6h16M4 12h16M4 18h10"/><circle cx="19" cy="18" r="2.4"/></svg>工作碎片</button>
-      <button id="nav-reports"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><path d="M7 3h10v18H7zM7 8h10M10 12h5M10 16h5"/></svg>报告管理</button>
-      <button id="nav-repos"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><circle cx="6" cy="6" r="2.5"/><circle cx="6" cy="18" r="2.5"/><circle cx="17" cy="9" r="2.5"/><path d="M6 8.5v7M8.4 7.2l6.2 1.3M17 11.5c0 3.5-4 3-7 4"/></svg>Git 仓库</button>
+    <aside class="nav" aria-label="主导航">
+      <button class="on" id="nav-today" aria-current="page"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" aria-hidden="true"><path d="M12 8v5l3 2"/><circle cx="12" cy="12" r="9"/></svg>今日记录</button>
+      <button id="nav-frags"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10"/><circle cx="19" cy="18" r="2.4"/></svg>工作碎片</button>
+      <button id="nav-reports"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" aria-hidden="true"><path d="M7 3h10v18H7zM7 8h10M10 12h5M10 16h5"/></svg>报告管理</button>
+      <button id="nav-repos"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" aria-hidden="true"><circle cx="6" cy="6" r="2.5"/><circle cx="6" cy="18" r="2.5"/><circle cx="17" cy="9" r="2.5"/><path d="M6 8.5v7M8.4 7.2l6.2 1.3M17 11.5c0 3.5-4 3-7 4"/></svg>Git 仓库</button>
     </aside>
 
     <div class="main">
       <div class="top">
         <div><h1 id="v-title">今日记录</h1><div class="sub" id="v-sub"></div></div>
         <div class="acts">
-          <button class="btn ghost" id="btn-settings"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h8M16 7h4M4 17h4M12 17h8"/><circle cx="14" cy="7" r="2.2"/><circle cx="10" cy="17" r="2.2"/></svg>设置</button>
+          <button class="btn ghost" id="btn-settings"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 7h8M16 7h4M4 17h4M12 17h8"/><circle cx="14" cy="7" r="2.2"/><circle cx="10" cy="17" r="2.2"/></svg>设置</button>
         </div>
       </div>
 
@@ -33,34 +33,44 @@
       <div class="view on" id="view-today">
         <div class="bento">
           <div class="card">
-            <h3>速记<span class="n" style="display:flex;gap:8px;align-items:center"><button class="btn b-git" id="btn-git"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><circle cx="6" cy="6" r="2.5"/><circle cx="6" cy="18" r="2.5"/><circle cx="17" cy="9" r="2.5"/><path d="M6 8.5v7M8.4 7.2l6.2 1.3M17 11.5c0 3.5-4 3-7 4"/></svg>Git 导入</button></span></h3>
+            <h3>速记<span class="n"><button class="btn b-git" id="btn-git"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" aria-hidden="true"><circle cx="6" cy="6" r="2.5"/><circle cx="6" cy="18" r="2.5"/><circle cx="17" cy="9" r="2.5"/><path d="M6 8.5v7M8.4 7.2l6.2 1.3M17 11.5c0 3.5-4 3-7 4"/></svg>Git 导入</button></span></h3>
             <div class="qwrap">
-              <textarea id="quick" rows="3" placeholder="记下做了什么…（支持多行，Ctrl+Enter 完成录入）"></textarea>
+              <textarea id="quick" rows="3" placeholder="记下做了什么…（支持多行，Ctrl+Enter 完成录入）" aria-label="速记内容"></textarea>
               <div class="qrow">
-                <input id="quick-r" style="flex:1;min-width:0" placeholder="项目（可选）">
+                <input id="quick-r" placeholder="项目（可选）" aria-label="项目（可选）">
                 <button class="btn" id="btn-save">待办</button>
                 <button class="btn primary" id="btn-done">完成</button>
               </div>
-              <div class="chips" id="quick-r-chips" style="margin-top:8px"></div>
+              <div class="chips" id="quick-r-chips"></div>
             </div>
-            <div class="gline" style="margin:16px 0 12px"></div>
-            <h3>今日碎片<span class="n" style="display:flex;gap:6px"><button class="btn b-ok" id="all-done"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M4 13l4 4L20 5"/></svg>一键完成</button><button class="btn b-cl" id="all-clear"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><path d="M5 7h14M9 7V5h6v2m-8 0l1 13h6l1-13"/></svg>一键清空</button></span></h3>
+            <div class="gline sep"></div>
+            <h3>今日碎片<span class="n"><button class="btn b-ok" id="all-done"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" aria-hidden="true"><path d="M4 13l4 4L20 5"/></svg>一键完成</button><button class="btn b-cl" id="all-clear"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" aria-hidden="true"><path d="M5 7h14M9 7V5h6v2m-8 0l1 13h6l1-13"/></svg>一键清空</button></span></h3>
             <div class="flowl">
               <div class="frags" id="today-frags"></div>
-              <div class="axis" id="axis"><span class="gl" style="bottom:8px"></span></div>
+              <div class="axis" id="axis" aria-hidden="true"><span class="gl" style="bottom:8px"></span></div>
             </div>
           </div>
-          <div style="display:flex;flex-direction:column;gap:14px">
+          <div class="side">
             <div class="card entry">
               <h3>今日概览</h3>
               <div class="stat" id="ov-stat">0<small>条碎片 · 0 已完成</small></div>
               <div class="gline"></div>
               <div class="klist">
+                <span>待办 <b id="ov-todo">0</b></span>
                 <span>最近记录 <b id="ov-last">—</b></span>
                 <span>日报 <b id="ov-rep">未生成</b></span>
               </div>
               <div class="gline"></div>
-              <button class="btn primary" id="btn-gen-daily" style="width:100%;justify-content:center" data-primary-action><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M4 20l10-10M13 4l7 7-4 4-7-7zM9 15l-2 6 6-2"/></svg>生成日报</button>
+              <button class="btn primary block" id="btn-gen-daily" data-primary-action><svg viewBox="0 0 24 24" fill="none" stroke-width="2" aria-hidden="true"><path d="M4 20l10-10M13 4l7 7-4 4-7-7zM9 15l-2 6 6-2"/></svg>生成日报</button>
+            </div>
+            <div class="card tips">
+              <h3>快捷操作</h3>
+              <div class="klist">
+                <span>完成录入 <kbd>Ctrl+Enter</kbd></span>
+                <span>唤起 / 隐藏窗口 <kbd>Alt+E</kbd></span>
+                <span>关闭弹窗 <kbd>Esc</kbd></span>
+              </div>
+              <p class="tip">在「工作碎片」中右键日期，可生成当日日报或删除整天记录。</p>
             </div>
           </div>
         </div>
@@ -69,16 +79,16 @@
       <!-- view: frags -->
       <div class="view" id="view-frags">
         <div class="toolbar">
-          <input id="fq" placeholder="搜索碎片内容…（限定匹配日期列表）">
-          <button class="btn" id="frag-add"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>手动新增</button>
-          <button class="btn b-git" id="frag-git"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><circle cx="6" cy="6" r="2.5"/><circle cx="6" cy="18" r="2.5"/><circle cx="17" cy="9" r="2.5"/><path d="M6 8.5v7M8.4 7.2l6.2 1.3M17 11.5c0 3.5-4 3-7 4"/></svg>Git 导入</button>
+          <input id="fq" placeholder="搜索碎片内容…（限定匹配日期列表）" aria-label="搜索碎片">
+          <button class="btn" id="frag-add"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>手动新增</button>
+          <button class="btn b-git" id="frag-git"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" aria-hidden="true"><circle cx="6" cy="6" r="2.5"/><circle cx="6" cy="18" r="2.5"/><circle cx="17" cy="9" r="2.5"/><path d="M6 8.5v7M8.4 7.2l6.2 1.3M17 11.5c0 3.5-4 3-7 4"/></svg>Git 导入</button>
           <span class="stats" id="frag-stats"></span>
         </div>
         <div class="repwrap">
           <div class="replist" id="frag-days"></div>
           <div class="repdetail">
-            <div class="card" style="padding:8px 10px;flex:1;min-height:0;overflow:auto"><div id="frag-list"></div></div>
-            <div class="repfoot"><button class="btn b-ok" id="frag-done"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M4 13l4 4L20 5"/></svg>一键完成</button><button class="btn b-cl" id="frag-clear"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><path d="M5 7h14M9 7V5h6v2m-8 0l1 13h6l1-13"/></svg>一键清空</button><span class="when" id="frag-when" style="margin-left:auto;text-align:right"></span></div>
+            <div class="card list"><div id="frag-list"></div></div>
+            <div class="repfoot"><button class="btn b-ok" id="frag-done"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" aria-hidden="true"><path d="M4 13l4 4L20 5"/></svg>一键完成</button><button class="btn b-cl" id="frag-clear"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" aria-hidden="true"><path d="M5 7h14M9 7V5h6v2m-8 0l1 13h6l1-13"/></svg>一键清空</button><span class="when right" id="frag-when"></span></div>
           </div>
         </div>
       </div>
@@ -86,22 +96,22 @@
       <!-- view: reports -->
       <div class="view" id="view-reports">
         <div class="toolbar">
-          <div class="seg" id="rep-tabs">
-            <button class="on" data-t="all">全部</button><button data-t="daily">日报</button><button data-t="weekly">周报</button><button data-t="monthly">月报</button>
+          <div class="seg" id="rep-tabs" role="group" aria-label="报告类型筛选">
+            <button class="on" data-t="all" aria-pressed="true">全部</button><button data-t="daily" aria-pressed="false">日报</button><button data-t="weekly" aria-pressed="false">周报</button><button data-t="monthly" aria-pressed="false">月报</button>
           </div>
           <span class="stats" id="rep-stats"></span>
-          <button class="btn" id="rep-new"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><path d="M12 5v14M5 12h14"/></svg>新建报告</button>
+          <button class="btn" id="rep-new"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>新建报告</button>
         </div>
         <div class="repwrap">
           <div class="replist" id="rep-list"></div>
           <div class="repdetail" id="rep-detail">
-            <div class="seg" id="rep-mode"><button class="on" data-m="preview">预览</button><button data-m="edit">编辑</button></div>
-            <textarea id="rep-text" spellcheck="false"></textarea>
+            <div class="seg" id="rep-mode"><button class="on" data-m="preview" aria-pressed="true">预览</button><button data-m="edit" aria-pressed="false">编辑</button></div>
+            <textarea id="rep-text" spellcheck="false" aria-label="报告内容"></textarea>
             <div id="rep-preview" class="md-preview" style="display:none"></div>
             <div class="repfoot"><span class="when" id="rep-when"></span></div>
             <div class="repfoot">
-              <button class="btn" id="rep-copy"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 012-2h10"/></svg>复制</button>
-              <button class="btn" id="rep-copy-md"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 012-2h10M12 3v12m0 0l-4-4m4 4l4-4M4 21h16"/></svg>复制 Markdown</button>
+              <button class="btn" id="rep-copy"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 012-2h10"/></svg>复制</button>
+              <button class="btn" id="rep-copy-md"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 012-2h10M12 3v12m0 0l-4-4m4 4l4-4M4 21h16"/></svg>复制 Markdown</button>
               <button class="btn" id="rep-regen">重新生成</button>
             </div>
           </div>
@@ -111,38 +121,38 @@
       <!-- view: repos -->
       <div class="view" id="view-repos">
         <div class="toolbar">
-          <button class="btn" id="repo-add"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>手动添加</button>
-          <button class="btn b-git" id="repo-scan"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><circle cx="11" cy="11" r="6"/><path d="M15.5 15.5L20 20M11 8v6M8 11h6"/></svg>扫描文件夹</button>
+          <button class="btn" id="repo-add"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>手动添加</button>
+          <button class="btn b-git" id="repo-scan"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" aria-hidden="true"><circle cx="11" cy="11" r="6"/><path d="M15.5 15.5L20 20M11 8v6M8 11h6"/></svg>扫描文件夹</button>
           <span class="stats" id="repo-stats"></span>
         </div>
-        <div class="card" style="padding:14px">
-          <div style="font-size:12px;color:var(--text3);margin-bottom:10px">开关控制该仓库是否参与 Git 导入 · 扫描文件夹可自动发现所选目录下的所有 Git 仓库（含 .git 的子目录，向下最多 3 层），已存在的自动跳过</div>
+        <div class="card repo">
+          <div class="note">开关控制该仓库是否参与 Git 导入 · 扫描文件夹可自动发现所选目录下的所有 Git 仓库（含 .git 的子目录，向下最多 3 层），已存在的自动跳过</div>
           <div id="repo-rows"></div>
-          <div class="mfoot" style="padding:16px 4px 8px"><button class="btn primary" id="repo-save">保存仓库配置</button><span class="hintx" id="repo-hint"></span></div>
+          <div class="mfoot inset"><button class="btn primary" id="repo-save">保存仓库配置</button><span class="hintx" id="repo-hint"></span></div>
         </div>
       </div>
     </div>
   </div>
 
   <!-- report modal -->
-  <div class="ovl" id="ovl-report">
+  <div class="ovl" id="ovl-report" tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="m-title">
     <div class="modal">
       <div class="mhead"><b id="m-title">生成日报</b>
-        <div class="seg" id="gen-tabs" style="margin-left:10px"><button class="on" data-t="daily">日报</button><button data-t="weekly">周报</button><button data-t="monthly">月报</button></div>
-        <input type="date" id="gen-date" style="height:30px;padding:0 8px;border-radius:8px;border:1px solid var(--stroke2);background:var(--ink);color:var(--text);outline:none;color-scheme:dark;font-size:12.5px">
-        <span style="color:var(--text3);font-size:12px;margin-left:10px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" id="rep-src"></span>
-        <button class="op x m-close" data-c="ovl-report"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+        <div class="seg" id="gen-tabs"><button class="on" data-t="daily" aria-pressed="true">日报</button><button data-t="weekly" aria-pressed="false">周报</button><button data-t="monthly" aria-pressed="false">月报</button></div>
+        <input type="date" id="gen-date" class="input-date sm" aria-label="报告日期">
+        <span class="src-hint" id="rep-src"></span>
+        <button class="op x m-close" data-c="ovl-report" aria-label="关闭"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
       </div>
       <div class="mbody">
-        <div class="pane"><h4>报告生成<span style="margin-left:auto"><button class="btn sm ghost" id="prompt-reset" title="清空自定义指令，回退到内置模板">恢复默认</button></span></h4>
-          <div class="seg" id="prompt-mode"><button class="on" data-m="ins">生成提示词</button><button data-m="rec">工作碎片</button></div>
-          <textarea id="prompt" spellcheck="false"></textarea>
+        <div class="pane"><h4>报告生成<span class="right"><button class="btn sm ghost" id="prompt-reset" title="清空自定义指令，回退到内置模板">恢复默认</button></span></h4>
+          <div class="seg" id="prompt-mode"><button class="on" data-m="ins" aria-pressed="true">生成提示词</button><button data-m="rec" aria-pressed="false">工作碎片</button></div>
+          <textarea id="prompt" spellcheck="false" aria-label="生成提示词"></textarea>
           <div id="prompt-records" style="display:none"></div>
         </div>
         <div class="pane"><h4>AI 输出</h4>
-          <div class="seg" id="gen-mode"><button class="on" data-m="preview">预览</button><button data-m="edit">编辑</button></div>
+          <div class="seg" id="gen-mode"><button class="on" data-m="preview" aria-pressed="true">预览</button><button data-m="edit" aria-pressed="false">编辑</button></div>
           <div id="gen" class="md-preview"></div>
-          <textarea id="gen-text" spellcheck="false" style="display:none"></textarea>
+          <textarea id="gen-text" spellcheck="false" style="display:none" aria-label="AI 输出编辑"></textarea>
         </div>
       </div>
       <div class="mfoot">
@@ -155,24 +165,24 @@
   </div>
 
   <!-- git import modal -->
-  <div class="ovl" id="ovl-git">
-    <div class="modal" style="width:min(680px,94vw)">
+  <div class="ovl" id="ovl-git" tabindex="-1" role="dialog" aria-modal="true" aria-label="Git 导入">
+    <div class="modal w680">
       <div class="mhead"><b>Git 导入</b>
-        <button class="op x m-close" data-c="ovl-git"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+        <button class="op x m-close" data-c="ovl-git" aria-label="关闭"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
       </div>
-      <div class="mbody" style="grid-template-columns:1fr;display:flex;flex-direction:column;gap:12px">
-        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-          <span style="font-size:12.5px;color:var(--text2);flex:none">提交日期</span>
-          <input type="date" id="git-src" style="height:34px;padding:0 10px;border-radius:9px;border:1px solid var(--stroke2);background:var(--ink);color:var(--text);outline:none;color-scheme:dark;font-size:13px">
-          <button class="btn" id="git-collect"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 11-2.3-5.6M20 4v4h-4"/></svg>查询提交日志</button>
-          <span class="stats" id="git-stats" style="margin-left:0"></span>
+      <div class="mbody col">
+        <div class="gitrow">
+          <span class="lbl">提交日期</span>
+          <input type="date" id="git-src" class="input-date" aria-label="提交日期">
+          <button class="btn" id="git-collect"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12a8 8 0 11-2.3-5.6M20 4v4h-4"/></svg>查询提交日志</button>
+          <span class="stats" id="git-stats"></span>
         </div>
         <div class="chips" id="repo-tags"></div>
-        <div id="commit-list" style="max-height:300px;overflow:auto"></div>
+        <div id="commit-list" class="commit-list"></div>
       </div>
       <div class="mfoot">
-        <span style="font-size:12.5px;color:var(--text2);flex:none">导入日期</span>
-        <input type="date" id="git-target" style="height:34px;padding:0 10px;border-radius:9px;border:1px solid var(--stroke2);background:var(--ink);color:var(--text);outline:none;color-scheme:dark;font-size:13px">
+        <span class="lbl">导入日期</span>
+        <input type="date" id="git-target" class="input-date" aria-label="导入日期">
         <button class="btn primary" id="git-import" disabled>导入</button>
         <span class="hintx">提交记为已完成 · 重复导入自动跳过 · 点击仓库标签可排除</span>
       </div>
@@ -180,32 +190,32 @@
   </div>
 
   <!-- manual add modal -->
-  <div class="ovl" id="ovl-add">
-    <div class="modal" style="width:min(420px,94vw)">
+  <div class="ovl" id="ovl-add" tabindex="-1" role="dialog" aria-modal="true" aria-label="手动新增">
+    <div class="modal w420">
       <div class="mhead"><b>手动新增</b>
-        <button class="op x m-close" data-c="ovl-add"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+        <button class="op x m-close" data-c="ovl-add" aria-label="关闭"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
       </div>
-      <div class="mbody" style="grid-template-columns:1fr;display:flex;flex-direction:column;gap:12px">
+      <div class="mbody col">
         <div class="row2">
-          <div class="field"><label>日期</label><input type="date" id="add-date" style="color-scheme:dark"></div>
-          <div class="field"><label>时间</label><input type="time" id="add-time"></div>
+          <div class="field"><label for="add-date">日期</label><input type="date" id="add-date"></div>
+          <div class="field"><label for="add-time">时间</label><input type="time" id="add-time"></div>
         </div>
-        <div class="field"><label>内容</label><textarea id="add-x" rows="4" placeholder="记录当天做的事…（支持多行）"></textarea></div>
-        <div class="field"><label>项目（可选）</label><input id="add-r" placeholder="如：工作报告助手"><div class="chips" id="add-r-chips" style="margin-top:8px"></div></div>
+        <div class="field"><label for="add-x">内容</label><textarea id="add-x" rows="4" placeholder="记录当天做的事…（支持多行）"></textarea></div>
+        <div class="field"><label for="add-r">项目（可选）</label><input id="add-r" placeholder="如：工作报告助手"><div class="chips" id="add-r-chips"></div></div>
       </div>
       <div class="mfoot"><button class="btn primary" id="add-ok">保存</button></div>
     </div>
   </div>
 
   <!-- scan result modal -->
-  <div class="ovl" id="ovl-scan" style="z-index:26">
-    <div class="modal" style="width:min(560px,94vw)">
-      <div class="mhead"><b>扫描结果</b><span style="color:var(--text3);font-size:12px" id="scan-path"></span>
-        <button class="op x m-close" data-c="ovl-scan"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  <div class="ovl" id="ovl-scan" tabindex="-1" role="dialog" aria-modal="true" aria-label="扫描结果">
+    <div class="modal w560">
+      <div class="mhead"><b>扫描结果</b><span class="src-hint" id="scan-path"></span>
+        <button class="op x m-close" data-c="ovl-scan" aria-label="关闭"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
       </div>
-      <div class="mbody" style="grid-template-columns:1fr;display:flex;flex-direction:column;gap:10px">
-        <div style="font-size:12.5px;color:var(--text2)" id="scan-sum"></div>
-        <div id="scan-list" style="max-height:280px;overflow:auto"></div>
+      <div class="mbody col">
+        <div class="note" id="scan-sum"></div>
+        <div id="scan-list" class="scan-list"></div>
       </div>
       <div class="mfoot">
         <button class="btn primary" id="scan-ok">加入仓库管理</button>
@@ -215,64 +225,63 @@
   </div>
 
   <!-- settings modal -->
-  <div class="ovl" id="ovl-set">
-    <div class="modal" style="width:min(560px,94vw)">
-      <div class="mhead"><b>设置</b><button class="op x m-close" data-c="ovl-set"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
-      <div class="mbody" style="grid-template-columns:1fr;display:flex;flex-direction:column;gap:16px">
-        <div class="field"><label>接口地址（OpenAI 兼容）</label><input id="s-url" placeholder="https://api.example.com/v1/chat/completions"></div>
+  <div class="ovl" id="ovl-set" tabindex="-1" role="dialog" aria-modal="true" aria-label="设置">
+    <div class="modal w560">
+      <div class="mhead"><b>设置</b><button class="op x m-close" data-c="ovl-set" aria-label="关闭"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+      <div class="mbody col g16">
+        <div class="field"><label for="s-url">接口地址（OpenAI 兼容）</label><input id="s-url" placeholder="https://api.example.com/v1/chat/completions"></div>
         <div class="row2">
-          <div class="field"><label>API Key</label>
+          <div class="field"><label for="s-key">API Key</label>
             <div class="key-wrap">
               <input id="s-key" type="password" placeholder="sk-…（未保存时填写）">
-              <button id="s-key-eye" type="button" tabindex="-1" title="显示 / 隐藏">
-                <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="eye-on"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
-                <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="eye-off" style="display:none"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/><path d="M4 4l16 16"/></svg>
+              <button id="s-key-eye" type="button" title="显示 / 隐藏" aria-label="显示或隐藏 API Key">
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="eye-on" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="eye-off" style="display:none" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/><path d="M4 4l16 16"/></svg>
               </button>
             </div>
           </div>
-          <div class="field"><label>模型名</label><input id="s-model" placeholder="如 deepseek-chat"></div>
+          <div class="field"><label for="s-model">模型名</label><input id="s-model" placeholder="如 deepseek-chat"></div>
         </div>
-        <div style="display:flex;gap:8px;align-items:center">
-          <button class="btn" id="s-test">测试连接</button><span class="testmsg" id="s-testmsg"></span>
+        <div class="btnrow">
+          <button class="btn" id="s-test">测试连接</button><span class="testmsg" id="s-testmsg" role="status"></span>
         </div>
         <div class="gline"></div>
-        <div class="field"><label>数据保存路径（修改后自动迁移数据文件）</label>
-          <div style="display:flex;gap:8px">
-            <input id="s-data" style="flex:1">
+        <div class="field"><label for="s-data">数据保存路径（修改后自动迁移数据文件）</label>
+          <div class="pathrow">
+            <input id="s-data">
             <button class="btn" id="s-data-pick">选择…</button>
           </div>
         </div>
         <div class="gline"></div>
-        <div class="toggle"><span class="sw" id="s-auto"></span>每天定时自动生成并通知</div>
+        <div class="toggle"><button type="button" class="sw" id="s-auto" role="switch" aria-checked="false" aria-label="每天定时自动生成并通知"></button>每天定时自动生成并通知</div>
         <div class="row2">
-          <div class="field"><label>定时时间</label><input id="s-time" type="time" value="18:30"></div>
-          <div class="field"></div>
+          <div class="field"><label for="s-time">定时时间</label><input id="s-time" type="time" value="18:30"></div>
         </div>
         <div class="gline"></div>
         <div>
           <div class="hkrow"><span>唤起 / 隐藏窗口</span><kbd id="s-hk1">Alt+E</kbd></div>
           <p class="tip">真实程序中点击即可重录热键</p>
         </div>
-        <div class="toggle"><span class="sw" id="s-boot"></span>开机自启</div>
+        <div class="toggle"><button type="button" class="sw" id="s-boot" role="switch" aria-checked="false" aria-label="开机自启"></button>开机自启</div>
       </div>
       <div class="mfoot"><button class="btn primary" id="s-save">保存设置</button><span class="hintx">Key 仅存本机加密配置</span></div>
     </div>
   </div>
 
   <!-- edit modal：ui.js editBox 的静态节点（原生 prompt 的桌面端替代） -->
-  <div class="ovl" id="ovl-edit" style="z-index:30">
-    <div class="modal" style="width:min(420px,94vw)">
+  <div class="ovl" id="ovl-edit" tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="edit-title">
+    <div class="modal w420">
       <div class="mhead"><b id="edit-title">编辑</b>
-        <button class="op x" id="edit-close" title="取消"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+        <button class="op x" id="edit-close" title="取消" aria-label="取消"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
       </div>
-      <div class="mbody" style="grid-template-columns:1fr;display:flex;flex-direction:column;gap:12px">
-        <div class="field"><label>内容</label><textarea id="edit-x" rows="8" placeholder="记录内容…（支持多行）"></textarea></div>
+      <div class="mbody col">
+        <div class="field"><label for="edit-x">内容</label><textarea id="edit-x" rows="8" placeholder="记录内容…（支持多行）"></textarea></div>
       </div>
       <div class="mfoot"><button class="btn" id="edit-cancel">取消</button><button class="btn primary" id="edit-ok">确定</button></div>
     </div>
   </div>
 
-  <div class="toasts" id="toasts"></div>
+  <div class="toasts" id="toasts" role="status" aria-live="polite"></div>
   <script type="module" src="/src/main.js"></script>
 </body>
 </html>
