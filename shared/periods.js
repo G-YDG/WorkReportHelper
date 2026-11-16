@@ -19,7 +19,19 @@ export const isoWeek = (d) => {
   const y = t.getFullYear()
   const jan = new Date(y, 0, 1)
   const wk = Math.ceil(((t - jan) / 864e5 + jan.getDay() + 1) / 7)
-  return { label: y + ' 年第 ' + pad(wk) + ' 周', from: keyOf(m), to: keyOf(new Date(m.getTime() + 6 * 864e5)), d: 'W-' + keyOf(m) }
+  return { label: y + ' 年第 ' + pad(wk) + ' 周', from: keyOf(m), to: keyOf(new Date(m.getTime() + 6 * 864e5)), d: 'W-' + keyOf(m), value: y + '-W' + pad(wk) }
+}
+// ISO 周值（YYYY-Www，native input[type=week]）反解该周周一；周 1 含 1 月 4 日
+export const mondayOfWeekValue = (v) => {
+  const [y, w] = v.split('-W').map(Number)
+  const jan4 = new Date(y, 0, 4)
+  const m1 = new Date(y, 0, 4 - ((jan4.getDay() + 6) % 7))
+  return keyOf(new Date(m1.getFullYear(), m1.getMonth(), m1.getDate() + (w - 1) * 7))
+}
+// 日期键平移 delta 天（日历加法，跨月跨年安全）
+export const shiftDay = (k, delta) => {
+  const [y, m, d] = k.split('-').map(Number)
+  return keyOf(new Date(y, m - 1, d + delta))
 }
 export const monthOf = (d) => ({
   label: d.getFullYear() + ' 年 ' + pad(d.getMonth() + 1) + ' 月',

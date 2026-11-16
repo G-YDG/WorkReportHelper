@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { keyOf, labelOf, isoWeek, monthOf, genMeta, prevMeta } from '../../shared/periods'
+import { keyOf, labelOf, isoWeek, monthOf, genMeta, prevMeta, shiftDay, mondayOfWeekValue, mondayOf } from '../../shared/periods'
 
 describe('periods', () => {
   it('keyOf 补零', () => {
@@ -58,5 +58,27 @@ describe('prevMeta', () => {
   it('daily：等同 genMeta daily', () => {
     const now = new Date(2026, 10, 16, 18, 30)
     expect(prevMeta('daily', now)).toEqual({ ...genMeta('daily', now), name: '今天' })
+  })
+})
+
+describe('shiftDay / 周值互转', () => {
+  it('shiftDay 跨月跨年边界', () => {
+    expect(shiftDay('2026-11-01', -1)).toBe('2026-10-31')
+    expect(shiftDay('2026-12-31', 1)).toBe('2027-01-01')
+    expect(shiftDay('2026-11-16', 0)).toBe('2026-11-16')
+  })
+  it('isoWeek 输出 ISO 周值 value', () => {
+    expect(isoWeek(new Date(2026, 10, 16)).value).toBe('2026-W47')
+    expect(isoWeek(new Date(2026, 0, 1)).value).toBe('2026-W01')
+  })
+  it('mondayOfWeekValue 周值反解周一（含跨年周）', () => {
+    expect(mondayOfWeekValue('2026-W47')).toBe('2026-11-16')
+    expect(mondayOfWeekValue('2026-W01')).toBe('2025-12-29')
+    expect(mondayOfWeekValue('2026-W53')).toBe('2026-12-28')
+  })
+  it('周值往返一致', () => {
+    for (const k of ['2026-11-16', '2026-01-01', '2026-12-31', '2025-12-29']) {
+      expect(mondayOfWeekValue(isoWeek(new Date(k + 'T00:00:00')).value)).toBe(mondayOf(new Date(k + 'T00:00:00')) && keyOf(mondayOf(new Date(k + 'T00:00:00'))))
+    }
   })
 })
