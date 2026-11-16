@@ -1,41 +1,59 @@
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect } from 'vitest'
 import { createScheduler } from '../../src/main/services/scheduler'
 
-const dbWith = (time, fragCount) => ({
-  frags: Array.from({ length: fragCount }, (_, i) => ({ id: i, d: '2026-10-16', done: true })),
-  reports: [],
-  cfg: { auto: true, time }
+const cfg = (over = {}) => ({
+  sched: {
+    daily: { on: true, time: '18:30' },
+    weekly: { on: true, time: '09:00', weekday: 1 },
+    monthly: { on: true, time: '09:00', day: 1 },
+    ...over
+  }
 })
+const db = (over) => ({ frags: [], reports: [], cfg: cfg(over) })
+const MON = new Date(2026, 10, 16, 9, 0) // 周一
+const make = (now, calls) => createScheduler({ now: () => now, onTrigger: async (_db, _n, type) => calls.push(type) })
 
-describe('scheduler', () => {
-  it('到达定时点且有碎片 → 生成并记录', async () => {
+describe('scheduler 多类型', () => {
+  it('daily 到点触发一次，同分钟不重复', async () => {
     const calls = []
-    const s = createScheduler({
-      now: () => new Date(2026, 9, 16, 18, 30),
-      onTrigger: async (db) => {
-        calls.push(db)
-        return { generated: true }
-      }
-    })
-    s.tick(dbWith('18:30', 3))
-    await vi.waitFor(() => expect(calls).toHaveLength(1))
+    const s = make(new Date(2026, 10, 16, 18, 30), calls)
+    s.tick(db()); s.tick(db())
+    await new Promise((r) => setTimeout(r, 0))
+    expect(calls).toEqual(['daily'])
   })
-  it('无碎片也触发（是否跳过由 onTrigger 内判断，触发后可能先导入 Git 提交）', async () => {
+  it('weekly 仅在配置星期几到点触发', async () => {
     const calls = []
-    const s = createScheduler({ now: () => new Date(2026, 9, 16, 18, 30), onTrigger: async () => calls.push(1) })
-    s.tick(dbWith('18:30', 0))
-    s.tick(dbWith('18:30', 0)) // 同一分钟不重复
-    await vi.waitFor(() => expect(calls).toHaveLength(1))
+    make(MON, calls).tick(db()) // 周一 09:00 → weekly
+    make(new Date(2026, 10, 17, 9, 0), calls).tick(db()) // 周二 → 不触发
+    await new Promise((r) => setTimeout(r, 0))
+    expect(calls).toEqual(['weekly'])
   })
-  it('同一分钟只触发一次；auto 关闭不触发', () => {
-    let n = 0
-    const s = createScheduler({ now: () => new Date(2026, 9, 16, 18, 30), onTrigger: async () => n++ })
-    s.tick(dbWith('18:30', 2))
-    s.tick(dbWith('18:30', 2))
-    s.tick(dbWith('18:31', 2))
-    expect(n).toBe(1)
-    const s2 = createScheduler({ now: () => new Date(2026, 9, 16, 18, 30), onTrigger: async () => n++ })
-    s2.tick({ frags: [{ id: 1 }], reports: [], cfg: { auto: false, time: '18:30' } })
-    expect(n).toBe(1)
+  it('monthly 仅在配置日期到点触发；二月 28 日可触发', async () => {
+    const calls = []
+    make(new Date(2026, 10, 1, 9, 0), calls).tick(db()) // 11-01 → monthly
+    make(new Date(2026, 10, 17, 9, 0), calls).tick(db()) // 17 号周二 → monthly/weekly 均不触发
+    make(new Date(2027, 1, 28, 9, 0), calls).tick(db({ monthly: { on: true, time: '09:00', day: 28 } }))
+    await new Promise((r) => setTimeout(r, 0))
+    expect(calls).toEqual(['monthly', 'monthly'])
+  })
+  it('同一分钟多类型同时到点各自触发', async () => {
+    const calls = []
+    const s = make(new Date(2027, 1, 1, 9, 0), calls) // 2027-02-01 是周一且 1 号：weekly+monthly
+    s.tick(db({ daily: { on: true, time: '09:00' } })) // daily 也改 09:00
+    await new Promise((r) => setTimeout(r, 0))
+    expect(calls.sort()).toEqual(['daily', 'monthly', 'weekly'])
+  })
+  it('on=false 的类型不触发；无 sched 不触发', async () => {
+    const calls = []
+    make(MON, calls).tick(db({ weekly: { on: false, time: '09:00', weekday: 1 } }))
+    make(MON, calls).tick({ frags: [], reports: [], cfg: {} })
+    await new Promise((r) => setTimeout(r, 0))
+    expect(calls).toEqual([])
+  })
+  it('weekday/day 缺省回退 1', async () => {
+    const calls = []
+    make(MON, calls).tick(db({ weekly: { on: true, time: '09:00' }, monthly: { on: true, time: '09:00' } }))
+    await new Promise((r) => setTimeout(r, 0))
+    expect(calls).toEqual(['weekly']) // 16 号非 1 号，monthly 不触发
   })
 })
