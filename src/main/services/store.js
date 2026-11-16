@@ -3,14 +3,37 @@ import { readFileSync, writeFileSync, renameSync, existsSync, copyFileSync, mkdi
 import { join, dirname } from 'node:path'
 import { safeStorage } from 'electron'
 
-const DEFAULT_DB = () => ({ frags: [], reports: [], cfg: { repos: [] }, nid: 1 })
+// 定时配置默认值（单一事实来源）：周报默认周一、月报默认 1 号（day 限 1–28 保证短月必触发）
+const SCHED_DEFAULT = {
+  daily: { on: false, time: '18:30' },
+  weekly: { on: false, time: '09:00', weekday: 1 },
+  monthly: { on: false, time: '09:00', day: 1 }
+}
+const GIT_AUTO_DEFAULT = { on: false, minutes: 30 }
+
+// 旧 cfg.auto/time → sched.daily；已有 sched/gitAuto 逐类型补默认不覆盖；迁移后剔除旧字段
+export function migrateCfg(cfg) {
+  const { auto, time, ...rest } = cfg || {}
+  const sched = rest.sched || { daily: { on: !!auto, time: time || '18:30' } }
+  return {
+    ...rest,
+    sched: {
+      daily: { ...SCHED_DEFAULT.daily, ...sched.daily },
+      weekly: { ...SCHED_DEFAULT.weekly, ...sched.weekly },
+      monthly: { ...SCHED_DEFAULT.monthly, ...sched.monthly }
+    },
+    gitAuto: { ...GIT_AUTO_DEFAULT, ...rest.gitAuto }
+  }
+}
+
+const DEFAULT_DB = () => ({ frags: [], reports: [], cfg: migrateCfg({ repos: [] }), nid: 1 })
 
 export function loadDb(file) {
   for (const f of [file, file + '.bak']) {
     if (!existsSync(f)) continue
     try {
       const db = JSON.parse(readFileSync(f, 'utf-8'))
-      return { ...DEFAULT_DB(), ...db, cfg: { repos: [], ...db.cfg } }
+      return { ...DEFAULT_DB(), ...db, cfg: migrateCfg({ repos: [], ...db.cfg }) }
     } catch {
       if (f === file) copyFileSync(file, file + '.corrupt') // 主文件坏才留证
     }

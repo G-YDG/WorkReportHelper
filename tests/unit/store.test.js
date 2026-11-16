@@ -3,7 +3,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { mkdtempSync, rmSync, readFileSync, writeFileSync, existsSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { loadDb, saveDb, encryptKey, decryptKey, getDataDir, setDataDir, defaultDataDir } from '../../src/main/services/store'
+import { loadDb, saveDb, encryptKey, decryptKey, getDataDir, setDataDir, defaultDataDir, migrateCfg } from '../../src/main/services/store'
 
 let dir
 beforeEach(() => { dir = mkdtempSync(join(tmpdir(), 'wrh-')) })
@@ -86,5 +86,33 @@ describe('数据目录锚点（可修改保存路径）', () => {
     const anchor = join(dir, 'broken.txt')
     writeFileSync(anchor, '')
     expect(getDataDir(anchor)).toBe(defaultDataDir())
+  })
+})
+
+describe('migrateCfg', () => {
+  it('旧 auto/time 迁移为 sched.daily 并删除旧字段', () => {
+    const cfg = migrateCfg({ repos: [], auto: true, time: '17:00' })
+    expect(cfg.sched.daily).toEqual({ on: true, time: '17:00' })
+    expect(cfg.auto).toBeUndefined()
+    expect(cfg.time).toBeUndefined()
+  })
+  it('无旧字段也无 sched → 全默认（daily 关）', () => {
+    const cfg = migrateCfg({ repos: [] })
+    expect(cfg.sched.daily).toEqual({ on: false, time: '18:30' })
+    expect(cfg.sched.weekly).toEqual({ on: false, time: '09:00', weekday: 1 })
+    expect(cfg.sched.monthly).toEqual({ on: false, time: '09:00', day: 1 })
+    expect(cfg.gitAuto).toEqual({ on: false, minutes: 30 })
+  })
+  it('已有 sched 不被覆盖，缺省类型补默认', () => {
+    const cfg = migrateCfg({ sched: { weekly: { on: true, time: '08:00', weekday: 5 } }, gitAuto: { on: true, minutes: 10 } })
+    expect(cfg.sched.weekly).toEqual({ on: true, time: '08:00', weekday: 5 })
+    expect(cfg.sched.daily.on).toBe(false)
+    expect(cfg.gitAuto).toEqual({ on: true, minutes: 10 })
+  })
+  it('loadDb 读旧版 data.json 自动迁移', () => {
+    writeFileSync(join(dir, 'data.json'), JSON.stringify({ frags: [], reports: [], cfg: { repos: [], auto: true, time: '18:30' }, nid: 1 }))
+    const db = loadDb(join(dir, 'data.json'))
+    expect(db.cfg.sched.daily.on).toBe(true)
+    expect(db.cfg.auto).toBeUndefined()
   })
 })
