@@ -115,6 +115,15 @@ describe('migrateCfg', () => {
     expect(cfg.sched.monthly.times).toEqual(['08:00', '20:00'])
     expect(cfg.sched.daily.time).toBeUndefined()
   })
+  it('sched 类型为 null 时容忍回退默认（不抛错、不判整库损坏）', () => {
+    const cfg = migrateCfg({ sched: { daily: null, weekly: null } })
+    expect(cfg.sched.daily).toEqual({ on: false, times: ['18:30'] })
+    expect(cfg.sched.weekly).toEqual({ on: false, times: ['09:00'], weekday: 1 })
+    writeFileSync(join(dir, 'data.json'), JSON.stringify({ frags: [{ id: 1, d: '2026-11-16', x: '在' }], reports: [], nid: 2, cfg: { repos: [], sched: { daily: null } } }))
+    const db = loadDb(join(dir, 'data.json'))
+    expect(db.frags).toHaveLength(1) // 完好数据不被降级丢失
+    expect(existsSync(join(dir, 'data.json.corrupt'))).toBe(false)
+  })
   it('loadDb 读旧版 data.json 自动迁移', () => {
     writeFileSync(join(dir, 'data.json'), JSON.stringify({ frags: [], reports: [], cfg: { repos: [], auto: true, time: '18:30' }, nid: 1 }))
     const db = loadDb(join(dir, 'data.json'))

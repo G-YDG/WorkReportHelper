@@ -13,8 +13,10 @@ const SCHED_DEFAULT = {
 const GIT_AUTO_DEFAULT = { on: false, minutes: 30 }
 
 // 逐类型合并默认值；time 单值 → times 数组（已有非空 times 优先），剔除旧 time 字段
-const withTimes = (base, over = {}) => {
-  const { time, ...rest } = over
+// over 空值归一：畸形 data.json（sched.<type>: null）容忍回退默认，与旧 spread 语义等价，
+// 避免解构抛错被 loadDb 判为整库损坏而降级丢数据
+const withTimes = (base, over) => {
+  const { time, ...rest } = over && typeof over === 'object' ? over : {}
   const times = Array.isArray(rest.times) && rest.times.length ? rest.times : time ? [time] : base.times
   return { ...base, ...rest, times }
 }
