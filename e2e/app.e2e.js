@@ -113,7 +113,7 @@ test('设置 tab：定时配置往返保存 + 非法间隔报错不关闭', asyn
     await expect(win.locator('#ovl-set')).toBeHidden()
     const db = JSON.parse(readFileSync(join(home, 'data.json'), 'utf-8'))
     expect(db.cfg.sched.weekly.on).toBe(true)
-    expect(db.cfg.sched.weekly.weekday).toBe(1)
+    expect(db.cfg.sched.weekly.points[0].day).toBe(1)
     expect(db.cfg.gitAuto).toEqual({ on: true, minutes: 5 })
     // 重开回显 + 非法值报错且不关闭
     await win.click('#btn-settings')
@@ -238,6 +238,42 @@ test('设置：times 恶意成员渲染被转义，无 HTML 注入', async () =>
     await win.waitForTimeout(300)
     expect(await win.locator('#s-d-times img').count()).toBe(0)
     expect(await win.evaluate(() => window.__pwned)).toBeUndefined()
+  } finally {
+    await app.close()
+  }
+})
+
+test('定时任务：周报时间点支持不同星期几往返与同日期重复报错', async () => {
+  const home = mkdtempSync(join(tmpdir(), 'wrh-e2e-points-'))
+  const app = await _electron.launch({ args: LAUNCH_ARGS, env: { ...process.env, WORKREPORTHELPER_HOME: home } })
+  try {
+    const win = await app.firstWindow()
+    await win.waitForSelector('#view-today.on')
+    await win.click('#btn-settings')
+    await win.waitForSelector('#ovl-set.show')
+    await win.click('.set-tabs button[data-t="sched"]')
+    const items = win.locator('#s-w-points .time-item')
+    await expect(items).toHaveCount(1)
+    await win.click('#set-sched button[data-add="w"]')
+    await expect(items).toHaveCount(2)
+    await items.nth(1).locator('select').selectOption('5')
+    await items.nth(1).locator('input').fill('18:00')
+    await win.click('#s-save')
+    await expect(win.locator('#ovl-set')).toBeHidden()
+    const db = JSON.parse(readFileSync(join(home, 'data.json'), 'utf-8'))
+    expect(db.cfg.sched.weekly.points).toEqual([{ day: 1, time: '09:00' }, { day: 5, time: '18:00' }])
+    // 重开回显：第二个点周五 18:00
+    await win.click('#btn-settings')
+    await win.waitForSelector('#ovl-set.show')
+    await win.click('.set-tabs button[data-t="sched"]')
+    await expect(items.nth(1).locator('select')).toHaveValue('5')
+    await expect(items.nth(1).locator('input')).toHaveValue('18:00')
+    // 同星期+同时间 → 重复报错不关闭
+    await items.nth(1).locator('select').selectOption('1')
+    await items.nth(1).locator('input').fill('09:00')
+    await win.click('#s-save')
+    await expect(win.locator('#ovl-set')).toBeVisible()
+    await expect(win.locator('#s-sched-err')).toContainText('重复')
   } finally {
     await app.close()
   }

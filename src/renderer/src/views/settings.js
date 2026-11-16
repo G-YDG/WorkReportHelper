@@ -13,15 +13,35 @@ const TIME_ITEM = (t) =>
   '<span class="time-item"><input type="time" class="sched-ctl" value="' + esc(t) + '" aria-label="触发时间">' +
   '<button type="button" class="op del" data-del aria-label="删除时间点"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></span>'
 const timesOf = (type) => [...$('s-' + type + '-times').querySelectorAll('input')].map((i) => i.value)
-function syncTimes(type) {
-  const box = $('s-' + type + '-times')
-  const n = box.querySelectorAll('input').length
+// weekly/monthly 时间点 = 日期+时间对：日期下拉（周几 / 几号）+ 时间 + 删除
+const DAY_OPTS = {
+  w: [[1, '周一'], [2, '周二'], [3, '周三'], [4, '周四'], [5, '周五'], [6, '周六'], [0, '周日']],
+  m: Array.from({ length: 28 }, (_, i) => [i + 1, (i + 1) + ' 号'])
+}
+const POINT_ITEM = (type, p) =>
+  '<span class="time-item"><select class="sched-ctl" aria-label="触发日期">' +
+  DAY_OPTS[type].map(([v, l]) => '<option value="' + v + '"' + (v === p.day ? ' selected' : '') + '>' + l + '</option>').join('') +
+  '</select><input type="time" class="sched-ctl" value="' + esc(p.time) + '" aria-label="触发时间">' +
+  '<button type="button" class="op del" data-del aria-label="删除时间点"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></span>'
+const pointsOf = (type) =>
+  [...$('s-' + type + '-points').querySelectorAll('.time-item')].map((it) => ({
+    day: +it.querySelector('select').value,
+    time: it.querySelector('input').value
+  }))
+const editorBox = (type) => $(type === 'd' ? 's-d-times' : 's-' + type + '-points')
+function syncEditor(type) {
+  const box = editorBox(type)
+  const n = box.querySelectorAll('.time-item').length
   document.querySelector('#set-sched [data-add="' + type + '"]').disabled = n >= TIMES_LIMIT
   box.querySelectorAll('[data-del]').forEach((b) => (b.disabled = n <= 1))
 }
 function renderTimes(type, times) {
-  $('s-' + type + '-times').innerHTML = times.map(TIME_ITEM).join('')
-  syncTimes(type)
+  editorBox(type).innerHTML = times.map(TIME_ITEM).join('')
+  syncEditor(type)
+}
+function renderPoints(type, points) {
+  editorBox(type).innerHTML = points.map((p) => POINT_ITEM(type, p)).join('')
+  syncEditor(type)
 }
 // 开关状态同步：视觉 class 与 aria-checked 保持一致（role="switch" 的 button）
 const setSwitch = (el, on) => { el.classList.toggle('on', on); el.setAttribute('aria-checked', String(on)) }
@@ -55,10 +75,8 @@ export function openSet() {
   setSwitch($('s-m-on'), !!sc.monthly.on)
   setSwitch($('s-g-on'), !!c.gitAuto.on)
   renderTimes('d', sc.daily.times)
-  renderTimes('w', sc.weekly.times)
-  renderTimes('m', sc.monthly.times)
-  $('s-w-day').value = String(sc.weekly.weekday)
-  $('s-m-day').value = String(sc.monthly.day)
+  renderPoints('w', sc.weekly.points)
+  renderPoints('m', sc.monthly.points)
   $('s-g-min').value = String(c.gitAuto.minutes)
   $('s-git-err').textContent = ''
   $('s-sched-err').textContent = ''
@@ -71,25 +89,24 @@ export function openSet() {
 export function bindSettings() {
   $('btn-settings').onclick = openSet
   document.querySelectorAll('.set-tabs button').forEach((b) => (b.onclick = () => applyTab(b.dataset.t)))
-  // 月报触发日期 1–28：保证短月（二月）也必触发
-  $('s-m-day').innerHTML = Array.from({ length: 28 }, (_, i) => '<option value="' + (i + 1) + '">' + (i + 1) + ' 号</option>').join('')
   for (const id of ['s-d-on', 's-w-on', 's-m-on', 's-g-on', 's-boot']) $(id).onclick = () => flipSwitch($(id))
-  // 时间点增删（事件委托）：添加默认 12:00；至少保留一个时间点
+  // 时间点增删（事件委托）：添加默认 12:00（周/月另带默认日期 1）；至少保留一个时间点
   $('set-sched').onclick = (e) => {
     const add = e.target.closest('[data-add]')
     if (add) {
       const type = add.dataset.add
-      if (timesOf(type).length >= TIMES_LIMIT) return
-      $('s-' + type + '-times').insertAdjacentHTML('beforeend', TIME_ITEM('12:00'))
-      syncTimes(type)
+      const box = editorBox(type)
+      if (box.querySelectorAll('.time-item').length >= TIMES_LIMIT) return
+      box.insertAdjacentHTML('beforeend', type === 'd' ? TIME_ITEM('12:00') : POINT_ITEM(type, { day: 1, time: '12:00' }))
+      syncEditor(type)
       return
     }
     const del = e.target.closest('[data-del]')
     if (del && !del.disabled) {
       const box = del.closest('.times')
-      if (box.querySelectorAll('input').length <= 1) return
+      if (box.querySelectorAll('.time-item').length <= 1) return
       del.closest('.time-item').remove()
-      syncTimes(box.id.slice(2, -6)) // 's-d-times' → 'd'
+      syncEditor(box.id.slice(2, 3)) // 's-d-times' / 's-w-points' → 'd' / 'w'
     }
   }
   // 数据保存路径：弹系统目录选择框
@@ -149,15 +166,25 @@ export function bindSettings() {
       return
     }
     $('s-git-err').textContent = ''
-    // 时间点校验：非空 / 不重复 / 不超上限，错误显示在定时任务 pane 并跳回
-    const schedTimes = {}
+    // 时间点校验：非空 / 不重复（周/月按日期+时间）/ 不超上限，错误显示在定时任务 pane 并跳回
+    const schedOut = {}
     for (const [type, key] of [['d', 'daily'], ['w', 'weekly'], ['m', 'monthly']]) {
-      const ts = timesOf(type)
-      const bad = !ts.length || ts.some((t) => !t) ? '时间点不能为空'
-        : new Set(ts).size !== ts.length ? '时间点不能重复'
-        : ts.length > TIMES_LIMIT ? '最多 ' + TIMES_LIMIT + ' 个时间点' : ''
+      let bad = ''
+      if (type === 'd') {
+        const ts = timesOf('d')
+        bad = !ts.length || ts.some((t) => !t) ? '时间点不能为空'
+          : new Set(ts).size !== ts.length ? '时间点不能重复'
+          : ts.length > TIMES_LIMIT ? '最多 ' + TIMES_LIMIT + ' 个时间点' : ''
+        if (!bad) schedOut.daily = { on: sw('s-d-on'), times: ts }
+      } else {
+        const pts = pointsOf(type)
+        const keys = pts.map((p) => p.day + '@' + p.time)
+        bad = !pts.length || pts.some((p) => !p.time) ? '时间点不能为空'
+          : new Set(keys).size !== keys.length ? '同日期时间点不能重复'
+          : pts.length > TIMES_LIMIT ? '最多 ' + TIMES_LIMIT + ' 个时间点' : ''
+        if (!bad) schedOut[key] = { on: sw('s-' + type + '-on'), points: pts }
+      }
       if (bad) { $('s-sched-err').textContent = bad; applyTab('sched'); return }
-      schedTimes[key] = ts
     }
     $('s-sched-err').textContent = ''
     const c = state.db.cfg
@@ -168,11 +195,7 @@ export function bindSettings() {
     if (key && key !== KEY_MASK) c.keyEnc = await window.api.store.encryptKey(key)
     if (!key && !c.keyEnc) c.keyEnc = ''
     c.dataPath = $('s-data').value.trim()
-    c.sched = {
-      daily: { on: sw('s-d-on'), times: schedTimes.daily },
-      weekly: { on: sw('s-w-on'), weekday: +$('s-w-day').value, times: schedTimes.weekly },
-      monthly: { on: sw('s-m-on'), day: +$('s-m-day').value, times: schedTimes.monthly }
-    }
+    c.sched = schedOut
     c.gitAuto = { on: sw('s-g-on'), minutes: n }
     const bootChanged = !!c.boot !== sw('s-boot')
     c.boot = sw('s-boot')
