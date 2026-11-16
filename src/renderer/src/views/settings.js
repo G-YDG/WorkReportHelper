@@ -1,11 +1,11 @@
-// src/renderer/src/views/settings.js — 设置弹窗：三 tab（AI 配置 / 定时任务 / 通用）
+// src/renderer/src/views/settings.js — 设置弹窗：三 tab（通用 / 模型配置 / 定时任务）
 // 保存时仅在新填写 Key 时重新加密（留空保留旧 keyEnc）；boot 变化才调 setBoot
 // 定时配置读写 cfg.sched / cfg.gitAuto（store 迁移保证存在）；旧 auto/time 不再读写
 import { state, persist } from '../state'
 import { $, toast } from '../ui'
 import { renderAll } from '../main'
 
-let setTab = 'ai' // 记忆上次停留的 tab，重开恢复
+let setTab = 'general' // 默认第一项通用；记忆上次停留的 tab，重开恢复
 const sw = (id) => $(id).classList.contains('on')
 // 开关状态同步：视觉 class 与 aria-checked 保持一致（role="switch" 的 button）
 const setSwitch = (el, on) => { el.classList.toggle('on', on); el.setAttribute('aria-checked', String(on)) }

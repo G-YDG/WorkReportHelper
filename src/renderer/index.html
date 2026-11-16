@@ -228,9 +228,23 @@
   <div class="ovl" id="ovl-set" tabindex="-1" role="dialog" aria-modal="true" aria-label="设置">
     <div class="modal w560">
       <div class="mhead"><b>设置</b><button class="op x m-close" data-c="ovl-set" aria-label="关闭"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
-      <div class="set-tabs seg" role="group" aria-label="设置分类"><button class="on" data-t="ai" aria-pressed="true">AI 配置</button><button data-t="sched" aria-pressed="false">定时任务</button><button data-t="general" aria-pressed="false">通用</button></div>
+      <div class="set-tabs seg" role="group" aria-label="设置分类"><button class="on" data-t="general" aria-pressed="true">通用</button><button data-t="model" aria-pressed="false">模型配置</button><button data-t="sched" aria-pressed="false">定时任务</button></div>
       <div class="mbody set">
-        <div class="set-pane on" id="set-ai">
+        <div class="set-pane on" id="set-general">
+          <div class="field"><label for="s-data">数据保存路径（修改后自动迁移数据文件）</label>
+            <div class="pathrow">
+              <input id="s-data">
+              <button class="btn" id="s-data-pick">选择…</button>
+            </div>
+          </div>
+          <div class="gline"></div>
+          <div>
+            <div class="hkrow"><span>唤起 / 隐藏窗口</span><kbd id="s-hk1">Alt+E</kbd></div>
+            <p class="tip">真实程序中点击即可重录热键</p>
+          </div>
+          <div class="toggle"><button type="button" class="sw" id="s-boot" role="switch" aria-checked="false" aria-label="开机自启"></button>开机自启</div>
+        </div>
+        <div class="set-pane" id="set-model">
           <div class="field"><label for="s-url">接口地址（OpenAI 兼容）</label><input id="s-url" placeholder="https://api.example.com/v1/chat/completions"></div>
           <div class="row2">
             <div class="field"><label for="s-key">API Key</label>
@@ -257,20 +271,6 @@
           <div class="schedrow"><button type="button" class="sw" id="s-g-on" role="switch" aria-checked="false" aria-label="Git 自动导入"></button><span class="lbl sched-name">Git 自动导入</span><input type="number" id="s-g-min" class="sched-ctl num" min="5" max="1440" step="5" value="30" aria-label="自动导入间隔分钟"><span class="lbl">分钟</span></div>
           <p class="testmsg err" id="s-git-err" role="alert"></p>
           <p class="tip">按间隔收集启用仓库的当天提交并导入（按 hash 去重）；仅有新导入时通知。</p>
-        </div>
-        <div class="set-pane" id="set-general">
-          <div class="field"><label for="s-data">数据保存路径（修改后自动迁移数据文件）</label>
-            <div class="pathrow">
-              <input id="s-data">
-              <button class="btn" id="s-data-pick">选择…</button>
-            </div>
-          </div>
-          <div class="gline"></div>
-          <div>
-            <div class="hkrow"><span>唤起 / 隐藏窗口</span><kbd id="s-hk1">Alt+E</kbd></div>
-            <p class="tip">真实程序中点击即可重录热键</p>
-          </div>
-          <div class="toggle"><button type="button" class="sw" id="s-boot" role="switch" aria-checked="false" aria-label="开机自启"></button>开机自启</div>
         </div>
       </div>
       <div class="mfoot"><button class="btn primary" id="s-save">保存设置</button><span class="hintx">Key 仅存本机加密配置</span></div>

@@ -99,8 +99,9 @@ test('设置 tab：定时配置往返保存 + 非法间隔报错不关闭', asyn
     await win.waitForSelector('#view-today.on')
     await win.click('#btn-settings')
     await win.waitForSelector('#ovl-set.show')
-    // tab 切换：默认 AI 配置 pane 可见，定时任务 pane 隐藏
-    await expect(win.locator('#set-ai')).toBeVisible()
+    // tab 顺序：通用 / 模型配置 / 定时任务；默认停在第一项通用
+    await expect(win.locator('#set-general')).toBeVisible()
+    await expect(win.locator('#set-model')).toBeHidden()
     await expect(win.locator('#set-sched')).toBeHidden()
     await win.click('.set-tabs button[data-t="sched"]')
     await expect(win.locator('#set-sched')).toBeVisible()
@@ -124,8 +125,8 @@ test('设置 tab：定时配置往返保存 + 非法间隔报错不关闭', asyn
     await win.click('#s-save')
     await expect(win.locator('#ovl-set')).toBeVisible()
     await expect(win.locator('#s-git-err')).toContainText('5')
-    // 跨 tab 可达性：切到 AI 配置再保存，应跳回定时任务并显示错误（而非静默无响应）
-    await win.click('.set-tabs button[data-t="ai"]')
+    // 跨 tab 可达性：切到模型配置再保存，应跳回定时任务并显示错误（而非静默无响应）
+    await win.click('.set-tabs button[data-t="model"]')
     await win.click('#s-save')
     await expect(win.locator('#set-sched')).toBeVisible()
     await expect(win.locator('#s-git-err')).toContainText('5')
