@@ -32,7 +32,8 @@ function renderGit() {
     if (!r || r.on === false) return
     if (gitOff.has(r.n)) gitOff.delete(r.n)
     else gitOff.add(r.n)
-    if (collected && collected.date === src) renderGit()
+    // 无条件重渲染：标签视觉由 gitOff 派生，查询前（collected=null）也要立即体现切换
+    renderGit()
   }))
   if (!collected || collected.date !== src) {
     $('commit-list').innerHTML =

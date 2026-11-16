@@ -1,6 +1,6 @@
 // e2e/app.e2e.js — E2E 主流程：记碎片 → 生成日报（本地降级）→ 报告管理可见 → 持久化落盘
 import { test, expect, _electron } from '@playwright/test'
-import { mkdtempSync, readFileSync } from 'node:fs'
+import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { readFile } from 'node:fs/promises'
@@ -130,6 +130,35 @@ test('设置 tab：定时配置往返保存 + 非法间隔报错不关闭', asyn
     await win.click('#s-save')
     await expect(win.locator('#set-sched')).toBeVisible()
     await expect(win.locator('#s-git-err')).toContainText('5')
+  } finally {
+    await app.close()
+  }
+})
+
+test('Git 导入：查询提交日志前仓库标签即可切换选中/取消', async () => {
+  const home = mkdtempSync(join(tmpdir(), 'wrh-e2e-git-'))
+  writeFileSync(join(home, 'data.json'), JSON.stringify({
+    frags: [], reports: [], nid: 1,
+    cfg: { repos: [{ n: 'repoA', p: join(home, 'a'), on: true }, { n: 'repoB', p: join(home, 'b'), on: true }] }
+  }))
+  const app = await _electron.launch({ args: LAUNCH_ARGS, env: { ...process.env, WORKREPORTHELPER_HOME: home } })
+  try {
+    const win = await app.firstWindow()
+    await win.waitForSelector('#view-today.on')
+    await win.click('#btn-git')
+    await win.waitForSelector('#ovl-git.show')
+    const chipA = win.locator('#repo-tags .chip[data-n="repoA"]')
+    await expect(chipA).toHaveClass(/on/)
+    // 查询前：点击应立即体现取消/选中（根因：条件重渲染导致视觉滞后于 gitOff）
+    await chipA.click()
+    await expect(chipA).toHaveClass(/off/)
+    await chipA.click()
+    await expect(chipA).toHaveClass(/on/)
+    // 查询后（路径不存在 → 采集失败但 collected 已置）：切换仍生效
+    await win.click('#git-collect')
+    await expect(win.locator('#git-stats')).toContainText('失败')
+    await chipA.click()
+    await expect(chipA).toHaveClass(/off/)
   } finally {
     await app.close()
   }
