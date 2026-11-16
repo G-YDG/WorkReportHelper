@@ -4,11 +4,12 @@ import { join, dirname } from 'node:path'
 import { safeStorage } from 'electron'
 
 // 定时配置默认值（单一事实来源）：周报默认周一、月报默认 1 号（day 限 1–28 保证短月必触发）
-// times 为时间点数组（多时间点生成）；旧单值 time 由 migrateCfg 迁移为 [time]
+// daily：times 时间点数组（同一天多时间）；weekly/monthly：points 日期+时间对数组（不同日期各自触发）
+// weekly 的 point.day = 星期几 0–6；monthly 的 point.day = 几号 1–28
 const SCHED_DEFAULT = {
   daily: { on: false, times: ['18:30'] },
-  weekly: { on: false, times: ['09:00'], weekday: 1 },
-  monthly: { on: false, times: ['09:00'], day: 1 }
+  weekly: { on: false, points: [{ day: 1, time: '09:00' }] },
+  monthly: { on: false, points: [{ day: 1, time: '09:00' }] }
 }
 const GIT_AUTO_DEFAULT = { on: false, minutes: 30 }
 
@@ -21,6 +22,17 @@ const withTimes = (base, over) => {
   return { ...base, ...rest, times }
 }
 
+// weekly/monthly：旧「单 weekday/day + time/times」迁移为「同日期 × 各时间点」的 points；
+// 已有非空 points 原样保留；剔除旧 weekday/day/time/times 字段；空值容忍回退默认
+const withPoints = (base, over, dayKey) => {
+  const o = over && typeof over === 'object' ? over : {}
+  const { time, times, points, weekday, day, ...rest } = o
+  const legacyDay = (dayKey === 'weekday' ? weekday : day) ?? 1
+  const ts = Array.isArray(times) && times.length ? times : time ? [time] : null
+  const pts = Array.isArray(points) && points.length ? points : ts ? ts.map((t) => ({ day: legacyDay, time: t })) : base.points
+  return { ...base, ...rest, points: pts }
+}
+
 // 旧 cfg.auto/time → sched.daily；已有 sched/gitAuto 逐类型补默认不覆盖；迁移后剔除旧字段
 export function migrateCfg(cfg) {
   const { auto, time, ...rest } = cfg || {}
@@ -29,8 +41,8 @@ export function migrateCfg(cfg) {
     ...rest,
     sched: {
       daily: withTimes(SCHED_DEFAULT.daily, sched.daily),
-      weekly: withTimes(SCHED_DEFAULT.weekly, sched.weekly),
-      monthly: withTimes(SCHED_DEFAULT.monthly, sched.monthly)
+      weekly: withPoints(SCHED_DEFAULT.weekly, sched.weekly, 'weekday'),
+      monthly: withPoints(SCHED_DEFAULT.monthly, sched.monthly, 'day')
     },
     gitAuto: { ...GIT_AUTO_DEFAULT, ...rest.gitAuto }
   }

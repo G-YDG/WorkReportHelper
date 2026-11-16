@@ -99,26 +99,32 @@ describe('migrateCfg', () => {
   it('无旧字段也无 sched → 全默认（daily 关）', () => {
     const cfg = migrateCfg({ repos: [] })
     expect(cfg.sched.daily).toEqual({ on: false, times: ['18:30'] })
-    expect(cfg.sched.weekly).toEqual({ on: false, times: ['09:00'], weekday: 1 })
-    expect(cfg.sched.monthly).toEqual({ on: false, times: ['09:00'], day: 1 })
+    expect(cfg.sched.weekly).toEqual({ on: false, points: [{ day: 1, time: '09:00' }] })
+    expect(cfg.sched.monthly).toEqual({ on: false, points: [{ day: 1, time: '09:00' }] })
     expect(cfg.gitAuto).toEqual({ on: false, minutes: 30 })
   })
   it('已有 sched 不被覆盖，缺省类型补默认', () => {
     const cfg = migrateCfg({ sched: { weekly: { on: true, time: '08:00', weekday: 5 } }, gitAuto: { on: true, minutes: 10 } })
-    expect(cfg.sched.weekly).toEqual({ on: true, times: ['08:00'], weekday: 5 })
+    expect(cfg.sched.weekly).toEqual({ on: true, points: [{ day: 5, time: '08:00' }] })
     expect(cfg.sched.daily.on).toBe(false)
     expect(cfg.gitAuto).toEqual({ on: true, minutes: 10 })
   })
-  it('分支旧版 sched.<type>.time 单值迁移为 times 数组并剔除 time', () => {
-    const cfg = migrateCfg({ sched: { daily: { on: true, time: '12:30' }, monthly: { on: true, times: ['08:00', '20:00'], day: 1 } } })
+  it('分支旧版单值 time / times+weekday/day 迁移为 points 日期时间对', () => {
+    const cfg = migrateCfg({ sched: { daily: { on: true, time: '12:30' }, monthly: { on: true, times: ['08:00', '20:00'], day: 15 } } })
     expect(cfg.sched.daily).toEqual({ on: true, times: ['12:30'] })
-    expect(cfg.sched.monthly.times).toEqual(['08:00', '20:00'])
+    expect(cfg.sched.monthly.points).toEqual([{ day: 15, time: '08:00' }, { day: 15, time: '20:00' }])
     expect(cfg.sched.daily.time).toBeUndefined()
+    expect(cfg.sched.monthly.day).toBeUndefined()
+  })
+  it('weekly/monthly 已有 points（不同日期）原样保留', () => {
+    const pts = [{ day: 1, time: '09:00' }, { day: 5, time: '18:00' }]
+    const cfg = migrateCfg({ sched: { weekly: { on: true, points: pts } } })
+    expect(cfg.sched.weekly.points).toEqual(pts)
   })
   it('sched 类型为 null 时容忍回退默认（不抛错、不判整库损坏）', () => {
     const cfg = migrateCfg({ sched: { daily: null, weekly: null } })
     expect(cfg.sched.daily).toEqual({ on: false, times: ['18:30'] })
-    expect(cfg.sched.weekly).toEqual({ on: false, times: ['09:00'], weekday: 1 })
+    expect(cfg.sched.weekly).toEqual({ on: false, points: [{ day: 1, time: '09:00' }] })
     writeFileSync(join(dir, 'data.json'), JSON.stringify({ frags: [{ id: 1, d: '2026-11-16', x: '在' }], reports: [], nid: 2, cfg: { repos: [], sched: { daily: null } } }))
     const db = loadDb(join(dir, 'data.json'))
     expect(db.frags).toHaveLength(1) // 完好数据不被降级丢失
