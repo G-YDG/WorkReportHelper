@@ -110,6 +110,7 @@ export function bindSettings() {
     const n = Number($('s-g-min').value)
     if (!Number.isInteger(n) || n < 5 || n > 1440) {
       $('s-git-err').textContent = '间隔需为 5–1440 之间的整数分钟'
+      applyTab('sched') // 错误字段在定时任务 pane：从其他 tab 保存时跳回，保证反馈可达
       return
     }
     $('s-git-err').textContent = ''

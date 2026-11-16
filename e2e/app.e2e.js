@@ -124,6 +124,11 @@ test('设置 tab：定时配置往返保存 + 非法间隔报错不关闭', asyn
     await win.click('#s-save')
     await expect(win.locator('#ovl-set')).toBeVisible()
     await expect(win.locator('#s-git-err')).toContainText('5')
+    // 跨 tab 可达性：切到 AI 配置再保存，应跳回定时任务并显示错误（而非静默无响应）
+    await win.click('.set-tabs button[data-t="ai"]')
+    await win.click('#s-save')
+    await expect(win.locator('#set-sched')).toBeVisible()
+    await expect(win.locator('#s-git-err')).toContainText('5')
   } finally {
     await app.close()
   }
