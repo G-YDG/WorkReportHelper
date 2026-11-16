@@ -2,7 +2,7 @@
 // 保存时仅在新填写 Key 时重新加密（留空保留旧 keyEnc）；boot 变化才调 setBoot
 // 定时配置读写 cfg.sched / cfg.gitAuto（store 迁移保证存在）；旧 auto/time 不再读写
 import { state, persist } from '../state'
-import { $, toast } from '../ui'
+import { $, esc, toast } from '../ui'
 import { renderAll } from '../main'
 
 let setTab = 'general' // 默认第一项通用；记忆上次停留的 tab，重开恢复
@@ -10,7 +10,7 @@ const TIMES_LIMIT = 8 // 每类型时间点上限
 const sw = (id) => $(id).classList.contains('on')
 // 多时间点编辑器：列表渲染 / 读取 / 增删按钮禁用态同步
 const TIME_ITEM = (t) =>
-  '<span class="time-item"><input type="time" class="sched-ctl" value="' + t + '" aria-label="触发时间">' +
+  '<span class="time-item"><input type="time" class="sched-ctl" value="' + esc(t) + '" aria-label="触发时间">' +
   '<button type="button" class="op del" data-del aria-label="删除时间点"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></span>'
 const timesOf = (type) => [...$('s-' + type + '-times').querySelectorAll('input')].map((i) => i.value)
 function syncTimes(type) {

@@ -221,3 +221,24 @@ test('定时任务：日报多时间点增删与往返保存、重复报错', as
     await app.close()
   }
 })
+
+test('设置：times 恶意成员渲染被转义，无 HTML 注入', async () => {
+  const home = mkdtempSync(join(tmpdir(), 'wrh-e2e-esc-'))
+  writeFileSync(join(home, 'data.json'), JSON.stringify({
+    frags: [], reports: [], nid: 1,
+    cfg: { repos: [], sched: { daily: { on: false, times: ['18:30', '"><img src=x onerror=window.__pwned=1>'] } } }
+  }))
+  const app = await _electron.launch({ args: LAUNCH_ARGS, env: { ...process.env, WORKREPORTHELPER_HOME: home } })
+  try {
+    const win = await app.firstWindow()
+    await win.waitForSelector('#view-today.on')
+    await win.click('#btn-settings')
+    await win.waitForSelector('#ovl-set.show')
+    await win.click('.set-tabs button[data-t="sched"]')
+    await win.waitForTimeout(300)
+    expect(await win.locator('#s-d-times img').count()).toBe(0)
+    expect(await win.evaluate(() => window.__pwned)).toBeUndefined()
+  } finally {
+    await app.close()
+  }
+})
