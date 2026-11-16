@@ -11,7 +11,7 @@ const sw = (id) => $(id).classList.contains('on')
 // 多时间点编辑器：列表渲染 / 读取 / 增删按钮禁用态同步
 const TIME_ITEM = (t) =>
   '<span class="time-item"><input type="time" class="sched-ctl" value="' + esc(t) + '" aria-label="触发时间">' +
-  '<button type="button" class="op del" data-del aria-label="删除时间点"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></span>'
+  '<button type="button" class="op del" data-del aria-label="删除时间"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></span>'
 const timesOf = (type) => [...$('s-' + type + '-times').querySelectorAll('input')].map((i) => i.value)
 // weekly/monthly 时间点 = 日期+时间对：日期下拉（周几 / 几号）+ 时间 + 删除
 const DAY_OPTS = {
@@ -22,7 +22,7 @@ const POINT_ITEM = (type, p) =>
   '<span class="time-item"><select class="sched-ctl" aria-label="触发日期">' +
   DAY_OPTS[type].map(([v, l]) => '<option value="' + v + '"' + (v === p.day ? ' selected' : '') + '>' + l + '</option>').join('') +
   '</select><input type="time" class="sched-ctl" value="' + esc(p.time) + '" aria-label="触发时间">' +
-  '<button type="button" class="op del" data-del aria-label="删除时间点"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></span>'
+  '<button type="button" class="op del" data-del aria-label="删除时间"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></span>'
 const pointsOf = (type) =>
   [...$('s-' + type + '-points').querySelectorAll('.time-item')].map((it) => ({
     day: +it.querySelector('select').value,
@@ -172,16 +172,16 @@ export function bindSettings() {
       let bad = ''
       if (type === 'd') {
         const ts = timesOf('d')
-        bad = !ts.length || ts.some((t) => !t) ? '时间点不能为空'
-          : new Set(ts).size !== ts.length ? '时间点不能重复'
-          : ts.length > TIMES_LIMIT ? '最多 ' + TIMES_LIMIT + ' 个时间点' : ''
+        bad = !ts.length || ts.some((t) => !t) ? '时间不能为空'
+          : new Set(ts).size !== ts.length ? '时间不能重复'
+          : ts.length > TIMES_LIMIT ? '最多 ' + TIMES_LIMIT + ' 个时间' : ''
         if (!bad) schedOut.daily = { on: sw('s-d-on'), times: ts }
       } else {
         const pts = pointsOf(type)
         const keys = pts.map((p) => p.day + '@' + p.time)
-        bad = !pts.length || pts.some((p) => !p.time) ? '时间点不能为空'
-          : new Set(keys).size !== keys.length ? '同日期时间点不能重复'
-          : pts.length > TIMES_LIMIT ? '最多 ' + TIMES_LIMIT + ' 个时间点' : ''
+        bad = !pts.length || pts.some((p) => !p.time) ? '时间不能为空'
+          : new Set(keys).size !== keys.length ? '同日期时间不能重复'
+          : pts.length > TIMES_LIMIT ? '最多 ' + TIMES_LIMIT + ' 个时间' : ''
         if (!bad) schedOut[key] = { on: sw('s-' + type + '-on'), points: pts }
       }
       if (bad) { $('s-sched-err').textContent = bad; applyTab('sched'); return }
