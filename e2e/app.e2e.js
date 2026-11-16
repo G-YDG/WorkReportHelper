@@ -163,3 +163,24 @@ test('Git 导入：查询提交日志前仓库标签即可切换选中/取消', 
     await app.close()
   }
 })
+
+test('Git 导入：仓库超过 8 个时标签默认收缩可展开', async () => {
+  const home = mkdtempSync(join(tmpdir(), 'wrh-e2e-tags-'))
+  const repos = Array.from({ length: 10 }, (_, i) => ({ n: 'repo' + i, p: join(home, 'r' + i), on: true }))
+  writeFileSync(join(home, 'data.json'), JSON.stringify({ frags: [], reports: [], nid: 1, cfg: { repos } }))
+  const app = await _electron.launch({ args: LAUNCH_ARGS, env: { ...process.env, WORKREPORTHELPER_HOME: home } })
+  try {
+    const win = await app.firstWindow()
+    await win.waitForSelector('#view-today.on')
+    await win.click('#btn-git')
+    await win.waitForSelector('#ovl-git.show')
+    await expect(win.locator('#repo-tags .chip[data-n]')).toHaveCount(8)
+    await expect(win.locator('#tags-toggle')).toContainText('10')
+    await win.click('#tags-toggle')
+    await expect(win.locator('#repo-tags .chip[data-n]')).toHaveCount(10)
+    await win.click('#tags-toggle')
+    await expect(win.locator('#repo-tags .chip[data-n]')).toHaveCount(8)
+  } finally {
+    await app.close()
+  }
+})

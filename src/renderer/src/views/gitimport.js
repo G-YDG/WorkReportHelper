@@ -6,12 +6,15 @@ import { renderAll } from '../main'
 
 let collected = null
 let gitOff = new Set()
+let tagsExpanded = false // 仓库标签展开态：每次打开弹窗重置为收缩
+const TAGS_LIMIT = 8 // 超过该数量默认收缩，只展示前 8 个 + 展开按钮
 const importedSet = () => new Set(state.db.frags.filter((f) => f.h).map((f) => f.h))
 const activeRepos = () => state.db.cfg.repos.filter((r) => r.on !== false && !gitOff.has(r.n))
 
 export function openGit(targetDay) {
   gitOff = new Set()
   collected = null
+  tagsExpanded = false
   $('git-src').value = targetDay || keyOf(new Date())
   $('git-target').value = $('git-src').value
   renderGit()
@@ -21,13 +24,19 @@ export function openGit(targetDay) {
 function renderGit() {
   const src = $('git-src').value || keyOf(new Date())
   const imp = importedSet()
-  $('repo-tags').innerHTML = state.db.cfg.repos
-    .map((r) => {
-      const off = r.on === false || gitOff.has(r.n)
-      return '<span class="chip' + (off ? ' off' : ' on') + '" data-n="' + esc(r.n) + '">' + esc(r.n) + '</span>'
-    })
-    .join('')
-  $('repo-tags').querySelectorAll('.chip').forEach((ch) => (ch.onclick = () => {
+  const repos = state.db.cfg.repos
+  const shown = !tagsExpanded && repos.length > TAGS_LIMIT ? repos.slice(0, TAGS_LIMIT) : repos
+  $('repo-tags').innerHTML =
+    shown
+      .map((r) => {
+        const off = r.on === false || gitOff.has(r.n)
+        return '<span class="chip' + (off ? ' off' : ' on') + '" data-n="' + esc(r.n) + '">' + esc(r.n) + '</span>'
+      })
+      .join('') +
+    (repos.length > TAGS_LIMIT
+      ? '<button type="button" class="chip more" id="tags-toggle">' + (tagsExpanded ? '收起' : '展开全部 ' + repos.length) + '</button>'
+      : '')
+  $('repo-tags').querySelectorAll('.chip[data-n]').forEach((ch) => (ch.onclick = () => {
     const r = state.db.cfg.repos.find((x) => x.n === ch.dataset.n)
     if (!r || r.on === false) return
     if (gitOff.has(r.n)) gitOff.delete(r.n)
@@ -35,6 +44,8 @@ function renderGit() {
     // 无条件重渲染：标签视觉由 gitOff 派生，查询前（collected=null）也要立即体现切换
     renderGit()
   }))
+  const toggle = $('tags-toggle')
+  if (toggle) toggle.onclick = () => { tagsExpanded = !tagsExpanded; renderGit() }
   if (!collected || collected.date !== src) {
     $('commit-list').innerHTML =
       '<div class="empty">选择提交日期后点「查询提交日志」<br>将从各启用仓库拉取该日期的提交</div>'

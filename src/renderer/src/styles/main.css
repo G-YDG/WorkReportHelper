@@ -250,6 +250,7 @@ input:focus-visible,textarea:focus-visible,select:focus-visible{outline:none;bor
 .chips .chip.on{border-color:rgba(138,160,230,.5);background:rgba(138,160,230,.12);color:var(--text)}
 .chips .chip.off{opacity:.4}
 .chips .chip svg{width:11px;height:11px;stroke:currentColor;stroke-width:2}
+.chips .chip.more{color:var(--ac);border-color:rgba(138,160,230,.4);background:var(--ac-soft);font-weight:600}
 
 /* ========== 分段控件 ========== */
 .seg{display:flex;gap:2px;padding:3px;border-radius:11px;background:var(--card);border:1px solid var(--stroke);flex:none}
