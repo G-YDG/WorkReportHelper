@@ -14,21 +14,29 @@ export function createGitAutoImporter({ now = () => new Date(), getDb, setDb, up
   let lastFailKey = ''
 
   async function job() {
-    const today = keyOf(now())
-    const repos = (getDb().cfg.repos || []).filter((r) => r.on !== false && r.p)
-    if (!repos.length) return
-    const failed = []
-    const commits = await collect(today, repos, (repo, ok) => { if (!ok) failed.push(repo) })
-    // await 期间渲染端可能保存替换 dbCache：导入基准现取 getDb()
-    const { db: next, added } = importCommits(getDb(), commits, today)
-    if (added) {
-      setDb(next)
-      updated()
-      notify('工作报告助手', '自动导入 ' + added + ' 条 Git 提交')
+    try {
+      const today = keyOf(now())
+      const repos = (getDb().cfg.repos || []).filter((r) => r.on !== false && r.p)
+      if (!repos.length) return
+      const failed = []
+      const commits = await collect(today, repos, (repo, ok) => { if (!ok) failed.push(repo) })
+      // await 期间渲染端可能保存替换 dbCache：导入基准现取 getDb()
+      const { db: next, added } = importCommits(getDb(), commits, today)
+      if (added) {
+        setDb(next) // 同步 fs 落盘，磁盘满/文件占用会抛错 → 下方 catch 通知
+        updated()
+        notify('工作报告助手', '自动导入 ' + added + ' 条 Git 提交')
+      }
+      const key = [...new Set(failed)].sort().join(',')
+      if (key && key !== lastFailKey) notify('工作报告助手', 'Git 自动导入失败：' + key)
+      lastFailKey = key
+    } catch (e) {
+      // 落盘等意外错误：通知用户（按错误去重防刷屏），不留未处理 rejection
+      const msg = String(e.message || e).slice(0, 100)
+      const key = 'job:' + msg
+      if (key !== lastFailKey) notify('工作报告助手', 'Git 自动导入失败：' + msg)
+      lastFailKey = key
     }
-    const key = [...new Set(failed)].sort().join(',')
-    if (key && key !== lastFailKey) notify('工作报告助手', 'Git 自动导入失败：' + key)
-    lastFailKey = key
   }
 
   return {

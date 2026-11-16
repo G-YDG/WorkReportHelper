@@ -64,6 +64,12 @@ describe('createGitAutoImporter', () => {
     await vi.waitFor(() => expect(d.collect).toHaveBeenCalledTimes(2))
     expect(d.notify).toHaveBeenCalledTimes(1) // 相同失败集合不重复通知
   })
+  it('setDb 落盘抛错 → 失败通知且不产生未处理 rejection', async () => {
+    const d = deps({ setDb: () => { throw new Error('EPERM: data.json 被占用') } })
+    const imp = createGitAutoImporter({ now: () => new Date(2026, 10, 16, 10, 0), ...d })
+    imp.tick(d.state.db)
+    await vi.waitFor(() => expect(d.notify).toHaveBeenCalledWith('工作报告助手', expect.stringContaining('Git 自动导入失败')))
+  })
   it('无启用仓库时不 collect 不通知', async () => {
     const d = deps()
     d.state.db.cfg.repos = []
