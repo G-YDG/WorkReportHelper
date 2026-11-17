@@ -1,77 +1,98 @@
 import { describe, it, expect } from 'vitest'
-import { readFileSync } from 'node:fs'
+import { readFileSync, statSync } from 'node:fs'
+import { execFileSync } from 'node:child_process'
 import { join } from 'node:path'
+import { pathToFileURL } from 'node:url'
+import { variantForSize, deriveVariant, buildIco } from '../../scripts/generate-icons.mjs'
 
 const ROOT = join(__dirname, '..', '..')
 
 describe('resources/icon.svg（权威源）', () => {
   const svg = () => readFileSync(join(ROOT, 'resources', 'icon.svg'), 'utf8')
 
-  it('包含对勾与标题带的派生标记', () => {
+  it('包含折线与数据点的派生标记', () => {
     const s = svg()
-    expect(s).toContain('id="check"')
-    expect(s).toContain('id="band"')
+    expect(s).toContain('id="chart"')
+    expect(s).toContain('id="dot"')
   })
 
-  it('包含定稿几何参数', () => {
+  it('包含定稿几何与配色参数', () => {
     const s = svg()
     expect(s).toContain('viewBox="0 0 48 48"')
-    expect(s).toContain('#5B7BE8')
-    expect(s).toContain('#8A6FE8')
-    expect(s).toContain('#DDE3FA')
-    expect(s).toContain('d="M15.5 27l7.5 7.5L37 18"')
+    expect(s).toContain('#4D9BF5')
+    expect(s).toContain('#3D6DE8')
+    expect(s).toContain('d="M16 31l6-7 5 4 7-9"')
   })
 
-  it('对勾描边宽度可被派生正则命中（id 在 stroke-width 之前）', () => {
+  it('折线描边宽度可被派生正则命中（id 在 stroke-width 之前）', () => {
     const s = svg()
-    expect(s).toMatch(/<path[^>]*id="check"[^>]*stroke-width="[^"]*"/)
+    expect(s).toMatch(/<path[^>]*id="chart"[^>]*stroke-width="[^"]*"/)
   })
 })
 
-import { variantForSize, deriveVariant } from '../../scripts/generate-icons.mjs'
-
 describe('variantForSize（尺寸→变体规则）', () => {
-  it('16px 及以下：描边 6、去标题带', () => {
-    expect(variantForSize(16)).toEqual({ stroke: '6', keepBand: false })
+  it('16px 及以下：描边 5、去数据点', () => {
+    expect(variantForSize(16)).toEqual({ stroke: '5', keepDot: false })
   })
-  it('17–32px：描边 5.2、保留标题带', () => {
-    expect(variantForSize(24)).toEqual({ stroke: '5.2', keepBand: true })
-    expect(variantForSize(32)).toEqual({ stroke: '5.2', keepBand: true })
+  it('17–32px：描边 4.2、保留数据点', () => {
+    expect(variantForSize(17)).toEqual({ stroke: '4.2', keepDot: true })
+    expect(variantForSize(24)).toEqual({ stroke: '4.2', keepDot: true })
+    expect(variantForSize(32)).toEqual({ stroke: '4.2', keepDot: true })
   })
-  it('33px 以上：描边 4.6、保留标题带', () => {
-    expect(variantForSize(48)).toEqual({ stroke: '4.6', keepBand: true })
-    expect(variantForSize(256)).toEqual({ stroke: '4.6', keepBand: true })
+  it('33px 以上：描边 3.5、保留数据点', () => {
+    expect(variantForSize(33)).toEqual({ stroke: '3.5', keepDot: true })
+    expect(variantForSize(48)).toEqual({ stroke: '3.5', keepDot: true })
+    expect(variantForSize(256)).toEqual({ stroke: '3.5', keepDot: true })
   })
 })
 
 describe('deriveVariant（从权威源派生小尺寸 SVG）', () => {
   const base = readFileSync(join(ROOT, 'resources', 'icon.svg'), 'utf8')
 
-  it('256px 原样返回（描边 4.6、含 band）', () => {
-    const out = deriveVariant(base, 256)
-    expect(out).toContain('stroke-width="4.6"')
-    expect(out).toContain('id="band"')
+  it('256px 原样返回（权威源即完整版）', () => {
+    expect(deriveVariant(base, 256)).toBe(base)
   })
-  it('32px 加粗描边到 5.2，保留 band', () => {
+  it('32px 加粗描边到 4.2，保留数据点', () => {
     const out = deriveVariant(base, 32)
-    expect(out).toContain('stroke-width="5.2"')
-    expect(out).toContain('id="band"')
-    expect(out).not.toContain('stroke-width="4.6"')
+    expect(out).toContain('stroke-width="4.2"')
+    expect(out).toContain('id="dot"')
+    expect(out).not.toContain('stroke-width="3.5"')
   })
-  it('16px 描边 6 且移除整个 band rect', () => {
+  it('16px 描边 5 且移除整个数据点 circle', () => {
     const out = deriveVariant(base, 16)
-    expect(out).toContain('stroke-width="6"')
-    expect(out).not.toContain('id="band"')
-    expect(out).not.toMatch(/<rect[^>]*DDE3FA/)
+    expect(out).toContain('stroke-width="5"')
+    expect(out).not.toContain('id="dot"')
+    expect(out).not.toMatch(/<circle/)
   })
-  it('不修改传入的源字符串（不可变）', () => {
-    const before = base
-    deriveVariant(base, 16)
-    expect(base).toBe(before)
+  it('16px 派生结果与权威源不同（派生真实发生）', () => {
+    expect(deriveVariant(base, 16)).not.toBe(base)
   })
 })
 
-import { buildIco } from '../../scripts/generate-icons.mjs'
+describe('deriveVariant 失配保护（防静默退化）', () => {
+  it('chart 属性顺序被重排时抛错', () => {
+    const reordered = '<svg><path stroke-width="3.5" id="chart" d="M16 31"/></svg>'
+    expect(() => deriveVariant(reordered, 32)).toThrow(/chart/)
+  })
+  it('dot 非自闭合写法导致移除失败时抛错', () => {
+    const paired = '<svg><path id="chart" stroke-width="3.5"/><circle id="dot" cx="34"></circle></svg>'
+    expect(() => deriveVariant(paired, 16)).toThrow(/dot/)
+  })
+})
+
+describe('CLI 入口守卫', () => {
+  it('导入模块不触发生成写盘（仅 CLI 直跑才写）', () => {
+    const target = join(ROOT, 'resources', 'icon.png')
+    const before = statSync(target).mtimeMs
+    const modUrl = pathToFileURL(join(ROOT, 'scripts', 'generate-icons.mjs')).href
+    execFileSync(
+      process.execPath,
+      ['--input-type=module', '-e', `await import(${JSON.stringify(modUrl)})`],
+      { cwd: ROOT }
+    )
+    expect(statSync(target).mtimeMs).toBe(before)
+  })
+})
 
 describe('buildIco（PNG 直嵌 ICO 容器）', () => {
   const pngOf = (size, byte) => Buffer.alloc(size, byte) // 用 size 字节的假 PNG 代表真 PNG

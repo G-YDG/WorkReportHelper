@@ -1,7 +1,7 @@
 // node: 内置 import 本任务暂未全部用到，任务 4 的 CLI 会使用；提前声明避免任务 4 重复贴 import
 import { readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { fileURLToPath } from 'node:url'
+import { fileURLToPath, pathToFileURL } from 'node:url'
 import { Resvg } from '@resvg/resvg-js'
 import { PNG } from 'pngjs'
 
@@ -9,21 +9,25 @@ const ROOT = join(fileURLToPath(import.meta.url), '..', '..')
 
 // 尺寸→变体规则（见设计文档「尺寸适配规则」）
 export function variantForSize(size) {
-  if (size <= 16) return { stroke: '6', keepBand: false }
-  if (size <= 32) return { stroke: '5.2', keepBand: true }
-  return { stroke: '4.6', keepBand: true }
+  if (size <= 16) return { stroke: '5', keepDot: false }
+  if (size <= 32) return { stroke: '4.2', keepDot: true }
+  return { stroke: '3.5', keepDot: true }
 }
 
-// 按 size 派生变体 SVG：替换 check 描边宽度，必要时移除 band rect。
-// 纯函数：不修改传入字符串。
+// 按 size 派生变体 SVG：替换 chart 描边宽度，必要时移除 dot circle。
+// 纯函数：不修改传入字符串。失配即抛错，防止权威源形态变化后静默产出错误变体。
 export function deriveVariant(svg, size) {
-  const { stroke, keepBand } = variantForSize(size)
-  let out = svg.replace(
-    /(<path[^>]*id="check"[^>]*stroke-width=")[^"]*"/,
-    `$1${stroke}"`
-  )
-  if (!keepBand) {
-    out = out.replace(/<rect[^>]*id="band"[^>]*\/>\s*/, '')
+  const { stroke, keepDot } = variantForSize(size)
+  const chartRe = /(<path[^>]*id="chart"[^>]*stroke-width=")[^"]*"/
+  if (!chartRe.test(svg)) {
+    throw new Error('权威源缺少 id="chart" 且 stroke-width 在后的 path，无法派生描边')
+  }
+  let out = svg.replace(chartRe, `$1${stroke}"`)
+  if (!keepDot) {
+    out = out.replace(/<circle[^>]*id="dot"[^>]*\/>\s*/, '')
+    if (out.includes('id="dot"')) {
+      throw new Error('权威源 dot circle 非自闭合写法，无法移除')
+    }
   }
   return out
 }
@@ -100,4 +104,8 @@ function main() {
   )
 }
 
-main()
+// CLI 入口守卫：仅直接运行（node scripts/generate-icons.mjs / npm run icons）才生成，
+// 被测试等导入时不触发写盘副作用
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  main()
+}

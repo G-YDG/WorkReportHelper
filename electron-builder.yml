@@ -5,6 +5,7 @@ directories:
 files:
   - out/**
   - resources/icon.png
+  - resources/icon.ico
 extraResources:
   - from: resources
     to: resources

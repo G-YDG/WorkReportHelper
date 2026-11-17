@@ -1,11 +1,13 @@
 // src/main/window.js — 无边框主窗口；关闭 = 隐藏到托盘（规格 4.6）
-import { BrowserWindow } from 'electron'
+import { BrowserWindow, app } from 'electron'
 import { join } from 'node:path'
 
 export function createWindow() {
   const win = new BrowserWindow({
     width: 1080,
     height: 680,
+    // dev 模式跑 electron.exe（内嵌原子图标），显式 icon 统一任务栏/窗口图标
+    icon: join(app.getAppPath(), 'resources', 'icon.ico'),
     resizable: false,
     maximizable: false,
     frame: false,
