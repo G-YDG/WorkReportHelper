@@ -82,3 +82,17 @@ describe('shiftDay / 周值互转', () => {
     }
   })
 })
+
+describe('ISO 周号非幸运年份（1 月 1 日周五/周六）', () => {
+  it('2027（元旦周五）周号不错位、年末不产生非法 W53', () => {
+    expect(isoWeek(new Date(2027, 0, 7)).value).toBe('2027-W01')
+    expect(isoWeek(new Date(2027, 11, 27)).value).toBe('2027-W52')
+    expect(isoWeek(new Date(2021, 0, 4)).value).toBe('2021-W01')
+  })
+  it('2027 逐日周值往返一致', () => {
+    for (const k of ['2027-01-04', '2027-06-15', '2027-12-27', '2028-01-01']) {
+      const d = new Date(k + 'T00:00:00')
+      expect(mondayOfWeekValue(isoWeek(d).value)).toBe(keyOf(mondayOf(d)))
+    }
+  })
+})

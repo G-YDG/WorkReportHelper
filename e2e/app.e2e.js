@@ -322,3 +322,95 @@ test('定时任务：三个时间点时加号按钮跟随末点同行不换行�
     await app.close()
   }
 })
+
+test('Git 导入：提交日期前一天/后一天快捷按钮', async () => {
+  const home = mkdtempSync(join(tmpdir(), 'wrh-e2e-step-'))
+  const app = await _electron.launch({ args: LAUNCH_ARGS, env: { ...process.env, WORKREPORTHELPER_HOME: home } })
+  try {
+    const win = await app.firstWindow()
+    await win.waitForSelector('#view-today.on')
+    await win.click('#btn-git')
+    await win.waitForSelector('#ovl-git.show')
+    await win.fill('#git-src', '2026-11-01')
+    await win.click('#git-prev')
+    await expect(win.locator('#git-src')).toHaveValue('2026-10-31')
+    await win.click('#git-next')
+    await win.click('#git-next')
+    await expect(win.locator('#git-src')).toHaveValue('2026-11-02')
+  } finally {
+    await app.close()
+  }
+})
+
+test('生成弹窗：周报选周、月报选月，日期选择器随周期切换', async () => {
+  const home = mkdtempSync(join(tmpdir(), 'wrh-e2e-picker-'))
+  writeFileSync(join(home, 'data.json'), JSON.stringify({
+    frags: [{ id: 1, d: '2026-11-10', t: '10:00', x: '周事', done: true }, { id: 2, d: '2026-10-05', t: '10:00', x: '月事', done: true }],
+    reports: [], nid: 3, cfg: { repos: [] }
+  }))
+  const app = await _electron.launch({ args: LAUNCH_ARGS, env: { ...process.env, WORKREPORTHELPER_HOME: home } })
+  try {
+    const win = await app.firstWindow()
+    await win.waitForSelector('#view-today.on')
+    await win.click('#btn-gen-daily')
+    await win.waitForSelector('#ovl-report.show')
+    await expect(win.locator('#gen-date')).toBeVisible()
+    await win.click('#gen-tabs button[data-t="weekly"]')
+    await expect(win.locator('#gen-week')).toBeVisible()
+    await expect(win.locator('#gen-date')).toBeHidden()
+    await win.fill('#gen-week', '2026-W46')
+    await expect(win.locator('#rep-src')).toContainText('2026-11-09 ~ 2026-11-15')
+    await win.click('#gen-tabs button[data-t="monthly"]')
+    await expect(win.locator('#gen-month')).toBeVisible()
+    await expect(win.locator('#gen-week')).toBeHidden()
+    await win.fill('#gen-month', '2026-10')
+    await expect(win.locator('#rep-src')).toContainText('2026-10-01 ~ 2026-10-31')
+    await win.click('#gen-tabs button[data-t="daily"]')
+    await expect(win.locator('#gen-date')).toBeVisible()
+  } finally {
+    await app.close()
+  }
+})
+
+test('报告管理：全部列表按生成时间降序', async () => {
+  const home = mkdtempSync(join(tmpdir(), 'wrh-e2e-sort-'))
+  writeFileSync(join(home, 'data.json'), JSON.stringify({
+    frags: [], nid: 1, cfg: { repos: [] },
+    reports: [
+      { type: 'daily', d: '2026-11-15', when: '2026-11-15 09:00', text: '# B' },
+      { type: 'daily', d: '2026-11-10', when: '2026-11-16 10:00', text: '# A' }
+    ]
+  }))
+  const app = await _electron.launch({ args: LAUNCH_ARGS, env: { ...process.env, WORKREPORTHELPER_HOME: home } })
+  try {
+    const win = await app.firstWindow()
+    await win.waitForSelector('#view-today.on')
+    await win.click('#nav-reports')
+    await win.waitForSelector('#view-reports.on')
+    // 生成更晚的 11-10 报告应排第一（而非周期日期更晚的 11-15）
+    await expect(win.locator('#rep-list .repitem').first()).toContainText('11-10')
+  } finally {
+    await app.close()
+  }
+})
+
+test('报告管理：缺 when 的畸形报告不致视图崩溃', async () => {
+  const home = mkdtempSync(join(tmpdir(), 'wrh-e2e-nowhen-'))
+  writeFileSync(join(home, 'data.json'), JSON.stringify({
+    frags: [], nid: 1, cfg: { repos: [] },
+    reports: [
+      { type: 'daily', d: '2026-11-10', text: '# 无 when' },
+      { type: 'daily', d: '2026-11-15', when: '2026-11-15 09:00', text: '# 有 when' }
+    ]
+  }))
+  const app = await _electron.launch({ args: LAUNCH_ARGS, env: { ...process.env, WORKREPORTHELPER_HOME: home } })
+  try {
+    const win = await app.firstWindow()
+    await win.waitForSelector('#view-today.on')
+    await win.click('#nav-reports')
+    await win.waitForSelector('#view-reports.on')
+    await expect(win.locator('#rep-list .repitem')).toHaveCount(2)
+  } finally {
+    await app.close()
+  }
+})

@@ -1,7 +1,7 @@
 // src/renderer/src/views/gitimport.js — Git 导入弹窗：收集各仓库提交 / 勾选排除 / 导入为已完成碎片
 import { state, addFrag } from '../state'
 import { $, esc, toast } from '../ui'
-import { keyOf } from '../../../../shared/periods'
+import { keyOf, shiftDay } from '../../../../shared/periods'
 import { renderAll } from '../main'
 
 let collected = null
@@ -100,6 +100,14 @@ export function bindGitImport() {
     collected = null
     renderGit()
   }
+  // 前一天/后一天快捷步进：与手动改日期同语义（重置已收集结果）
+  const step = (delta) => {
+    $('git-src').value = shiftDay($('git-src').value || keyOf(new Date()), delta)
+    collected = null
+    renderGit()
+  }
+  $('git-prev').onclick = () => step(-1)
+  $('git-next').onclick = () => step(1)
   $('git-import').onclick = () => {
     const imp = importedSet()
     const tgt = $('git-target').value || keyOf(new Date())

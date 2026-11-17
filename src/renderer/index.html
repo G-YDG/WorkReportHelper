@@ -138,6 +138,8 @@
       <div class="mhead"><b id="m-title">生成日报</b>
         <div class="seg" id="gen-tabs"><button class="on" data-t="daily" aria-pressed="true">日报</button><button data-t="weekly" aria-pressed="false">周报</button><button data-t="monthly" aria-pressed="false">月报</button></div>
         <input type="date" id="gen-date" class="input-date sm" aria-label="报告日期">
+        <input type="week" id="gen-week" class="input-date sm" style="display:none" aria-label="报告周">
+        <input type="month" id="gen-month" class="input-date sm" style="display:none" aria-label="报告月">
         <span class="src-hint" id="rep-src"></span>
         <button class="op x m-close" data-c="ovl-report" aria-label="关闭"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
       </div>
@@ -171,7 +173,9 @@
       <div class="mbody col">
         <div class="gitrow">
           <span class="lbl">提交日期</span>
+          <button class="op" id="git-prev" title="前一天" aria-label="前一天"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></button>
           <input type="date" id="git-src" class="input-date" aria-label="提交日期">
+          <button class="op" id="git-next" title="后一天" aria-label="后一天"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
           <button class="btn" id="git-collect"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12a8 8 0 11-2.3-5.6M20 4v4h-4"/></svg>查询提交日志</button>
           <span class="stats" id="git-stats"></span>
         </div>

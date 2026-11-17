@@ -24,7 +24,8 @@ function repSrc(r) {
 const findRep = (id) => state.db.reports.find((r) => repId(r) === id)
 
 export function renderReports() {
-  const all = [...state.db.reports].sort((a, b) => b.d.localeCompare(a.d))
+  // 按生成时间降序（最新生成在前）；同时间按周期日期降序兜底；when 缺失守卫防畸形数据崩溃
+  const all = [...state.db.reports].sort((a, b) => (b.when || '').localeCompare(a.when || '') || b.d.localeCompare(a.d))
   const ls = repFilter === 'all' ? all : all.filter((r) => r.type === repFilter)
   $('rep-stats').textContent = '共 ' + all.length + ' 份 · 日报 ' + all.filter((r) => r.type === 'daily').length +
     ' / 周报 ' + all.filter((r) => r.type === 'weekly').length + ' / 月报 ' + all.filter((r) => r.type === 'monthly').length

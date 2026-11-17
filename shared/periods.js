@@ -18,7 +18,9 @@ export const isoWeek = (d) => {
   t.setDate(t.getDate() + 3)
   const y = t.getFullYear()
   const jan = new Date(y, 0, 1)
-  const wk = Math.ceil(((t - jan) / 864e5 + jan.getDay() + 1) / 7)
+  // ISO 周号 = 该周周四的年内序号 / 7 向上取整（t 已平移到周四）；
+  // 不可加 jan.getDay()：元旦为周五/周六的年份（2027/2028 等）会整体 +1
+  const wk = Math.ceil(((t - jan) / 864e5 + 1) / 7)
   return { label: y + ' 年第 ' + pad(wk) + ' 周', from: keyOf(m), to: keyOf(new Date(m.getTime() + 6 * 864e5)), d: 'W-' + keyOf(m), value: y + '-W' + pad(wk) }
 }
 // ISO 周值（YYYY-Www，native input[type=week]）反解该周周一；周 1 含 1 月 4 日

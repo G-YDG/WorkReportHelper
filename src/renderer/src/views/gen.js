@@ -2,7 +2,7 @@
 import { state, persist } from '../state'
 import { $, toast } from '../ui'
 import { mdToHtml } from '../md'
-import { genMeta, TP, keyOf } from '../../../../shared/periods'
+import { genMeta, TP, keyOf, isoWeek, mondayOfWeekValue } from '../../../../shared/periods'
 import { buildInstruction, buildRecords, localReport } from '../../../../shared/ai-text'
 import { switchView } from '../main'
 
@@ -16,6 +16,12 @@ let shownLen = 0 // 已渲染到面板的字符数
 let targetText = '' // 目标全文（流式增量 / 一次性结果都只更新它）
 let promptEdited = false // 用户是否修改过提示词指令（修改后按修改版调用 AI）
 let genMode = 'preview' // preview | edit（默认预览，与报告管理一致）
+let genBaseKey = '' // 当前基准日期键：切换周期 tab 时保持同一基准所在周期
+// 日期选择器随周期切换：日报选日 / 周报选周（ISO 周值）/ 月报选月
+const PICKERS = { daily: 'gen-date', weekly: 'gen-week', monthly: 'gen-month' }
+const showPicker = (type) => {
+  for (const [t, id] of Object.entries(PICKERS)) $(id).style.display = t === type ? '' : 'none'
+}
 
 // 自定义指令按周期类型分别记忆（cfg.promptIns[type]），空 = 使用内置默认
 const savedIns = (type) => (state.db.cfg.promptIns || {})[type] || ''
@@ -80,7 +86,11 @@ export function openGen(type, dayKey) {
     b.classList.toggle('on', b.dataset.t === type)
     b.setAttribute('aria-pressed', String(b.dataset.t === type))
   })
+  showPicker(type)
   $('gen-date').value = genM.from // 周报回填周一、月报回填当月 1 号，均可被 date 控件接受
+  $('gen-week').value = isoWeek(base).value
+  $('gen-month').value = genM.from.slice(0, 7)
+  genBaseKey = keyOf(base)
   $('m-title').textContent = '生成' + TP[type]
   const list = fragsOf(genM)
   promptEdited = false // 换类型/换日期后重新加载对应记忆
@@ -156,9 +166,11 @@ async function doRunGen() {
 }
 
 export function bindGen() {
-  $('gen-tabs').querySelectorAll('button').forEach((b) => (b.onclick = () => openGen(b.dataset.t, $('gen-date').value)))
-  // 切换目标日期：按当前类型重新计算周期
+  $('gen-tabs').querySelectorAll('button').forEach((b) => (b.onclick = () => openGen(b.dataset.t, genBaseKey || undefined)))
+  // 切换目标日期/周/月：按当前类型重新计算周期
   $('gen-date').onchange = () => openGen(genType, $('gen-date').value)
+  $('gen-week').onchange = () => { const v = $('gen-week').value; if (v) openGen('weekly', mondayOfWeekValue(v)) }
+  $('gen-month').onchange = () => { const v = $('gen-month').value; if (v) openGen('monthly', v + '-01') }
   // 指令修改即自动保存（按周期类型记忆），生成时始终以面板当前内容为准
   $('prompt').oninput = (e) => { promptEdited = true; saveIns(genType, e.target.value) }
   $('prompt-reset').onclick = () => {
